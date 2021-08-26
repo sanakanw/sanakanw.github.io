@@ -15,6 +15,8 @@ let min_depth;
 let prev_vertex = -1;
 let start_vertex = 0;
 
+const player_radius = 5;
+
 let prev_plane;
 
 function add_vertex(x, y)
@@ -153,9 +155,8 @@ function d_ssector(ssector)
 
 function d_player()
 {
-  const point_size = 20;
   bsp_ctx.beginPath();
-  bsp_ctx.arc(map_player.x, map_player.y, 10, 0, 2 * Math.PI);
+  bsp_ctx.arc(map_player.x, map_player.y, player_radius, 0, 2 * Math.PI);
   bsp_ctx.fill();
   bsp_ctx.closePath();
 }
@@ -227,7 +228,6 @@ function main()
   get_node("gen").addEventListener("mousedown", gen_bsp);
   
   fill_style("#ffffff");
-  
   setInterval(function() {
     if (bsp_root) {
       update_map();
@@ -253,8 +253,10 @@ function main()
       if (right)
         new_pos.x += 1;
       
-      if (!walk_bsp_r(bsp_root, new_pos, 10))
+      if (!walk_bsp_r(bsp_root, new_pos, player_radius))
         map_player = new_pos;
+      else
+        d_plane(min_plane);
     }
   }, 10);
 }
@@ -375,8 +377,8 @@ function bsp_insert_linedef_r(line, node)
   let a = map_vertices[map_linedefs[line].a];
   let b = map_vertices[map_linedefs[line].b];
   
-  let a_plane = Math.floor(vec2_dot(a, node.plane.n) - node.plane.d);
-  let b_plane = Math.floor(vec2_dot(b, node.plane.n) - node.plane.d);
+  let a_plane = Math.floor((vec2_dot(a, node.plane.n) - node.plane.d));
+  let b_plane = Math.floor((vec2_dot(b, node.plane.n) - node.plane.d));
   
   if (a_plane <= 0 && b_plane <= 0) {
     bsp_insert_left(line, node);
@@ -396,10 +398,15 @@ function bsp_insert_linedef_r(line, node)
     
     d_point(v.x, v.y);
     
-    let midpoint = add_vertex(v.x, v.y); 
+    let midpoint1 = add_vertex(v.x - n.x * 1.00, v.y - n.y * 1.00);
+    let midpoint2 = add_vertex(v.x + n.x * 1.00, v.y + n.y * 1.00);
     
-    bsp_insert_left(add_linedef(map_linedefs[line].a, midpoint), node);
-    bsp_insert_right(add_linedef(midpoint, map_linedefs[line].b), node);
+    if (map_vertices.length > 200) {
+      console.log("abayo");
+      return;
+    }
+    bsp_insert_left(add_linedef(map_linedefs[line].a, midpoint1), node);
+    bsp_insert_right(add_linedef(midpoint2, map_linedefs[line].b), node);
   }
 }
 
