@@ -7,12 +7,30 @@ body {
   color: white;
 }
 
+.info {
+  float: left;
+  position: fixed;
+  border: 1px solid;
+}
+
 canvas {
   border: 1px solid white;
 };
 </style>
 </head>
 <body>
+<pre class="info">
+BSP MAP
+This uses binary space partioning
+to divide up convex shapes which
+can hopefully be "efficiently" used
+in collision testing and rendering.
+It might crash cuz some of the
+edges infinitely split when
+floating error thingy happens and
+it thinks it's on the other side of
+the splitting plane.
+</pre>
 <canvas id="display" width=800" height="600"></canvas>
 <br>
 <br>
