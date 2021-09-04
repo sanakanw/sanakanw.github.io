@@ -4,6 +4,8 @@ let obj_file;
 let ctx;
 let ctx_data;
 
+let display;
+
 function load_obj(path, on_asset_loaded)
 {
   var xhttp = new XMLHttpRequest();
@@ -22,7 +24,12 @@ function load_obj(path, on_asset_loaded)
 
 function vid_init()
 {
-  ctx = get_id("display").getContext("2d");
+  display = get_id("display").getContext("2d");
+  display.imageSmoothingEnabled = false;
+  let c = document.createElement("CANVAS");
+  c.width = 128;
+  c.height = 96;
+  ctx = c.getContext("2d");
   ctx.fillStyle = "#ffffff";
   
   ctx_data = ctx.getImageData(0, 0, 128, 96);
@@ -62,6 +69,7 @@ function vid_update(vm, vga_addr)
   }
   
   ctx.putImageData(ctx_data, 0, 0);
+  display.drawImage(ctx.canvas, 0, 0, display.canvas.width, display.canvas.height);
 }
 
 function main()
@@ -78,34 +86,34 @@ function main()
   
   document.addEventListener("keydown", function(e) {
     switch (e.keyCode) {
-    case 65:
-      left = 1;
-      break;
-    case 68:
-      right = 1;
-      break;
-    case 87:
+    case 38:
       up = 1;
       break;
+    case 40:
+      down= 1;
+      break;
+    case 87:
+      left = 1;
+      break;
     case 83:
-      down = 1;
+      right = 1;
       break;
     }
   });
   
   document.addEventListener("keyup", function(e) {
     switch (e.keyCode) {
-    case 65:
-      left = 0;
-      break;
-    case 68:
-      right = 0;
-      break;
-    case 87:
+    case 38:
       up = 0;
       break;
-    case 83:
+    case 40:
       down = 0;
+      break;
+    case 87:
+      left = 0;
+      break;
+    case 83:
+      right = 0;
       break;
     }
   });
@@ -122,11 +130,12 @@ function main()
   let count = 0;
   
   vm_call(vm, "init");
+	
   setInterval(function() {
-    vm_call(vm, "update", [ left, right, up, down ]);
     vm_call(vm, "draw");
+    vm_call(vm, "update", [ left, right, up, down ]);
     vid_update(vm, vga_addr);
-  }, 10);
+  }, 20);
 }
 
 function get_id(id)

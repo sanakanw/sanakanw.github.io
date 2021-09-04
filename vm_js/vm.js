@@ -64,8 +64,8 @@ enum_val = 0;
 const sys_print = enum_val++;
 const sys_exit  = enum_val++;
 
-const MAX_STACK = 1024;
-const MAX_MEMORY = 2048;
+const MAX_STACK = 2048;
+const MAX_MEMORY = 4096;
 
 let reg_str = [
   "ip",
@@ -279,7 +279,7 @@ function exec(vm)
     vm.reg[ax] = ~vm.reg[ax];
     break;
   default:
-    console.log("error: unknown op\n");
+    alert("error: unknown op\n");
     break;
   }
 }
@@ -288,9 +288,9 @@ function print_stack(vm)
 {
   let str_stack = "";
   for (let i = 0; i < 8; i++) {
-    let stack_pos = (vm.stack_pos + MAX_STACK) / sizeof_op_t - i - 1;
+    let stack_pos = vm.stack_pos / sizeof_op_t + MAX_STACK - i - 1;
     
-    str_stack += String("000" + (stack_pos).toString()).slice(-3) + " ";
+    str_stack += String("000" + (i * 4).toString()).slice(-3) + " ";
     str_stack += String("00000000" + vm.mem[stack_pos].toString(16)).slice(-8);
     
     if (vm.reg[sp] == stack_pos * sizeof_op_t)
@@ -337,7 +337,7 @@ function vm_load_bin(vm, bin)
   
   let dict = [];
   for (let i = 0; i < num_label; i++) {
-    dict.push({
+		dict.push({
       id: bin[pos++],
       offset: bin[pos++]
     });
