@@ -1,0 +1,160 @@
+@import url(https://fonts.googleapis.com/css?family=Exo+2:300,300italic,200,200italic,400,400italic,500,500italic,600,600italic,700,700italic,900);
+@import url(https://fonts.googleapis.com/css?family=Karla:400);
+
+body {
+	background-color: #000000;
+	font-family: "Exo 2", sans-serif;
+	color: #ffffff;
+	
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: white;
+}
+
+.home-nav {
+	margin: 0;
+	
+	top: 0%;
+	padding-left: 1%;
+	position: absolute;
+}
+	.home-nav > img {
+		display: inline-block;
+		
+		width: 7%;
+		height: 7%;
+		
+		padding: 0;
+		margin: 0;
+		
+		vertical-align: middle;
+	}
+	
+	.home-nav > nav {
+		display: inline-block;
+		margin-left: 3%;
+	}
+	
+		.home-nav > nav > a {
+			position: relative;
+			
+			padding: 10px;
+			
+			font-size: 14pt;
+			font-weight: 200;
+			
+			text-decoration: none;
+			color: #ffffff;
+			letter-spacing: 0.1em;
+			display: inline-block;
+			
+			top: 0;
+			
+			transition: top 0.5s, color 0.5s;
+		}
+		
+		.home-nav > nav > a:hover {
+			top: 15px;
+			color: #e3e3e3;
+		}
+
+.contact-links {
+	position: absolute;
+	right: 0;
+	
+	padding: 1%;
+	top: 0%;
+}
+
+	.contact-links > nav {
+		
+	}
+		
+		.contact-links > nav > a {
+			padding-left: 15pt;
+			display: inline-block;
+			font-size: 1.70em;
+			text-decoration: none;
+			color: white;
+			
+			line-height: 1.8em;
+			
+			transition: font-size 0.5s, color 0.5s;
+		}
+		
+		.contact-links > nav > a:hover {
+			font-size: 2.0em;
+			color: #e3e3e3;
+		}
+
+.main {
+	width: 80%;
+	margin: auto;
+	
+	margin-top: 10%;
+	font-family: "Karla", sans-serif;
+}
+	.main > p {
+		color: grey;
+		font-size: 15pt;
+		letter-spacing: 0.1em;
+		font-family: "Exo 2";
+		font-weight: 200;
+	}
+	
+	.main > h1 {
+		width: 20%;
+		
+		margin: auto;
+		margin-bottom: 2%;
+		
+		font-family: "Exo 2", sans-serif;
+		font-size: 40pt;
+		font-weight: 200;
+		
+		text-align: center;
+		vertical-align: middle;
+		
+		border-top: 2px solid;
+		border-bottom: 2px solid;
+	}
+	
+	.main > .content {
+		width: 100%;
+		height: 56%;
+		overflow-y: scroll;
+		
+		scrollbar-color: grey black;
+		scrollbar-width: thin;
+		scrollbar-radius: 10px;
+		
+	}
+	
+	.main > .content::-webkit-scrollbar {
+		width: 6px;
+		background-color: #aaa;
+	}
+	
+	.main > .content::-webkit-scrollbar-thumb {
+		background: #1e1e1e;
+	}
+	
+		.main > .content > h1 {
+			color: grey;
+			font-size: 15pt;
+			letter-spacing: 0.1em;
+			font-family: "Exo 2";
+			font-weight: 200;
+		}
+		
+		.main > .content > p {
+			margin-left: 5%;
+			letter-spacing: 0.1em;
+			line-height: 1.5em;
+			font-size: 16pt;
+			font-weight: 200;
+			font-family: "Karla";
+		}
