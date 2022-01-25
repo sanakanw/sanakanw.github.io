@@ -17,7 +17,7 @@ function main()
   
   const map = new map_t(64, 64);
   
-  map.gen(128, 8, 2, 2);
+  map.gen(1024, 8, 2, 2);
   
   game.new_map(map);
   renderer.new_map(map);
