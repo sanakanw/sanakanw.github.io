@@ -9,6 +9,7 @@ export class MapMesh {
   {
     this.meshPool = meshPool;
     this.mapHandle = mapHandle;
+    this.vertexOffset = meshPool.vertexPointer;
     
     this.chunkMesh = {};
   }
@@ -28,6 +29,12 @@ export class MapMesh {
     } else {
       return null;
     }
+  }
+  
+  reset()
+  {
+    this.chunkMesh = {};
+    this.meshPool.reset(this.vertexOffset);
   }
   
   genChunkMesh(chunk)
@@ -58,6 +65,9 @@ export class MapMesh {
         }
       }
     }
+    
+    if (this.meshPool.vertexPointer + vertices.length >= this.meshPool.maxVertices)
+      this.reset();
     
     return this.meshPool.newMesh(vertices);
   }

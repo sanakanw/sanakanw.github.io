@@ -11,9 +11,12 @@ export class Game {
     this.camera = new Camera(new Vector3(0.0, 0.0, 0.0), 0.0);
     this.sprites = [];
     
-    this.sprites.push(new Sprite(new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), 0, true));
-    
     inputInit();
+  }
+  
+  newPlayer()
+  {
+    return this.sprites.push(new Sprite(new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), 0, true)) - 1;
   }
   
   update()
@@ -46,5 +49,7 @@ export class Game {
       this.camera.pos.x -= Math.sin(this.camera.rot) * MOVE_SPEED;
       this.camera.pos.y -= Math.cos(this.camera.rot) * MOVE_SPEED;
     }
+    
+    this.sprites[0].pos = this.camera.pos;
   }
 }

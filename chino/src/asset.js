@@ -1,5 +1,7 @@
 "use strict";
 
+const rootDir = window.location;
+
 export function loadFile(path, onLoaded)
 {
   const xhr = new XMLHttpRequest();
@@ -13,7 +15,7 @@ export function loadFile(path, onLoaded)
     }
   };
   
-  xhr.open("GET", path);
+  xhr.open("GET", rootDir + path);
   xhr.send();
 }
 
@@ -31,5 +33,5 @@ export function loadImage(path, onLoaded)
     onLoaded(image);
   };
   
-  image.src = path;
+  image.src = rootDir + path;
 }

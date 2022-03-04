@@ -8,21 +8,22 @@ export function mapHandleLoad(path, onLoaded)
   loadJSON(path, (map) => {
     loadJSON(map.tileset, (tileset) => {
       loadImage(tileset.image, (image) => {
-        onLoaded(new MapHandle(map, tileset, image));
+        const mapHandle = new MapHandle(tileset, image);
+        
+        mapHandle.newChunks(map.chunks);
+        
+        onLoaded(mapHandle);
       });
     });
   });
 }
 
 export class MapHandle {
-  constructor(map, tileset, image)
+  constructor(tileset, image)
   {
-    this.map = map;
     this.tileset = tileset;
     this.image = image;
     this.chunkDict = {}; // use coordinates as key (TODO: change this into a quad tree or smth)
-    
-    this.newChunks(map.chunks);
   }
   
   getChunkID(xPos, yPos)
@@ -37,8 +38,8 @@ export class MapHandle {
       this.chunkDict[this.getChunkID(chunk.xPos, chunk.yPos)] = chunk;
   }
   
-  getChunk(pos)
+  getChunk(xPos, yPos)
   {
-    return this.chunkDict[this.getChunkID(pos.x, pos.y)];
+    return this.chunkDict[this.getChunkID(xPos, yPos)];
   }
 }

@@ -1,20 +1,20 @@
 "use strict";
 
-import { Game } from "./game.js";
-import { Renderer } from "./renderer.js";
+import { Server } from "./server.js";
+import { Client } from "./client.js";
 import { mapHandleLoad } from "./map-handle.js";
 
 function main()
 {
-  const game = new Game();
-  const renderer = new Renderer(game);
+  const server = new Server();
+  const client = new Client(server);
   
   mapHandleLoad("/assets/maps/nexus.json", (mapHandle) => {
-    renderer.newMap(mapHandle);
-  
+    server.newMap(mapHandle);
+    
     setInterval(() => {
-      game.update();
-      renderer.renderView();
+      client.update();
+      server.update();
     }, 15);
   });
 }

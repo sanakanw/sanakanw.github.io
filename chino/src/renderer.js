@@ -25,13 +25,13 @@ export class Renderer {
     
     this.game = game;
     this.basicShader = new BasicShader();
-    this.meshPool = new MeshPool(8 * 1024);
+    this.meshPool = new MeshPool(32 * 1024);
     this.mapMesh = null;
     this.spriteMesh = null;
     
     this.basicShader.bind();
     
-    const fov = 12.0;
+    const fov = 10.0;
     
     this.mapProjectionMatrix = Matrix4.initOrthogonalPerspective(
       -fov,
@@ -55,7 +55,7 @@ export class Renderer {
     this.mapTexture = new Texture(mapHandle.image);
     this.mapTexture.bind();
     
-    this.meshPool.reset();
+    this.meshPool.reset(0);
     
     this.mapMesh = new MapMesh(this.meshPool, mapHandle);
     this.spriteMesh = new SpriteMesh(this.meshPool, mapHandle.tileset, this.game.camera);

@@ -66,9 +66,9 @@ export class MeshPool {
     }
   }
   
-  reset()
+  reset(offset)
   {
-    this.vertexPointer = 0;
+    this.vertexPointer = offset;
   }
   
   newMesh(vertices)

@@ -43,7 +43,7 @@ function parseTmx(tmxPath)
   const data = tmx.layers[0].data;
   const chunks = chunkData(data, width, height);
   
-  const tileset = "/assets/tilesets/" + tsx.name + ".json";
+  const tileset = "assets/tilesets/" + tsx.name + ".json";
   
   return new Map(tileset, chunks);
 }
@@ -55,7 +55,7 @@ function parseTsx(tsxPath)
   
   const imagePath = path.parse(tsx.image);
   
-  const image = "/assets/tilesets/" + imagePath.base;
+  const image = "assets/tilesets/" + imagePath.base;
   const tileWidth = tsx.tilewidth / tsx.imagewidth;
   const tileHeight = tsx.tileheight / tsx.imageheight;
   const tileCount = tsx.tilecount;

@@ -29,7 +29,7 @@ export class SpriteMesh {
       new Vector2(0.0, 1.0), new Vector2(0.0, 0.0), new Vector2(1.0, 1.0)
     ];
     
-    const spriteVertices = [];
+    const vertices = [];
     
     for (const sprite of sprites) {
       let spriteOffset = new Vector3(0.0, 0.0, 0.0);
@@ -46,12 +46,12 @@ export class SpriteMesh {
         const vertexPos = spriteRotPos.add(new Vector3(sprite.pos.x, sprite.pos.y, 0));
         const vertexUV = spriteUVOffset.mul(texelSize);
         
-        spriteVertices.push(new Vertex(vertexPos, vertexUV));
+        vertices.push(new Vertex(vertexPos, vertexUV));
       }
     }
     
-    this.meshPool.subMesh(this.spriteMesh, spriteVertices);
-    this.numVertices = spriteVertices.length;
+    this.meshPool.subMesh(this.spriteMesh, vertices);
+    this.numVertices = vertices.length;
   }
   
   draw()
