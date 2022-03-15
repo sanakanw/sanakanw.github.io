@@ -210,7 +210,6 @@ function gen_bevel_planes(brush)
       if (shared.length == 2) {
         const d = brush.faces[i].normal.dot(brush.faces[j].normal);
         if (d < -DOT_DEGREE) {
-        console.log(d);
           const normal = axis_align(brush.faces[i].normal.add(brush.faces[j].normal).normalize());
           const distance = shared[0].pos.dot(normal);
           

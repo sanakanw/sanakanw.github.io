@@ -189,6 +189,16 @@ export class plane_t {
     this.normal = normal;
     this.distance = distance;
   }
+  
+  copy()
+  {
+    return new plane_t(this.normal.copy(), this.distance);
+  }
+  
+  toString()
+  {
+    return "plane_t(" + this.normal + ", " + this.distance + ")";
+  }
 }
 
 export class mat4_t {
