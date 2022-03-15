@@ -132,7 +132,7 @@ function parse_obj(obj_path)
       vtbuf.push(
         new vec2_t(
           parseFloat(args[1]),
-          parseFloat(args[2])
+          1 - parseFloat(args[2])
         ));
     } else if (args[0] == "vn") {
       vnbuf.push(

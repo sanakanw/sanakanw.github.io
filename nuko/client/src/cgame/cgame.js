@@ -81,7 +81,7 @@ export class cgame_t {
   
   apply_gravity()
   {
-    const GRAVITY = 14;
+    const GRAVITY = 20;
     
     for (let i = 0; i < this.num_entities; i++) {
       if (!this.c_motion[i])
@@ -137,7 +137,7 @@ export class cgame_t {
     if (this.c_pmove.grounded)
       accel_speed = pmove_accelerate(vel, wish_dir, 1.0, 6.0);
     else
-      accel_speed = pmove_accelerate(vel, wish_dir, 1.2, 1.5);
+      accel_speed = pmove_accelerate(vel, wish_dir, 1.5, 2.0);
     
     this.c_motion[this.player].apply_force(wish_dir.mulf(accel_speed));
   }
@@ -145,7 +145,7 @@ export class cgame_t {
   player_jump()
   {
     if (this.usercmd.jump && this.c_pmove.grounded) {
-      this.c_motion[this.player].force = this.c_motion[this.player].force.add(new vec3_t(0, 200, 0));
+      this.c_motion[this.player].force = this.c_motion[this.player].force.add(new vec3_t(0, 300, 0));
       this.c_pmove.grounded = false;
     }
   }
