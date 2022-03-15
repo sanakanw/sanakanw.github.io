@@ -11,6 +11,13 @@ export class face_t {
   }
 }
 
+export class material_t {
+  constructor(texture)
+  {
+    this.texture = texture;
+  }
+}
+
 export class brush_t {
   static BRUSH_EMPTY = 0;
   static BRUSH_SOLID = 1;
@@ -21,9 +28,20 @@ export class brush_t {
   }
 }
 
+export class brushgroup_t {
+  constructor(id_material, brushofs, brushend)
+  {
+    this.id_material = id_material;
+    this.brushofs = brushofs;
+    this.brushend = brushend;
+  }
+}
+
 export class map_t {
-  constructor(brushes)
+  constructor(brushes, brushgroups, materials)
   {
     this.brushes = brushes;
+    this.brushgroups = brushgroups;
+    this.materials = materials;
   }
 }

@@ -1,7 +1,7 @@
 "use strict";
 
 import { gl } from "./gl.js";
-import { vertex_t } from "./vertex.js";
+import { vertex_t } from "../common/vertex.js";
 
 function vertex_to_array_buffer(vertices)
 {
@@ -12,6 +12,9 @@ function vertex_to_array_buffer(vertices)
     float_array[i * vertex_t.ATTRIB_SIZE + 0] = vertices[i].pos.x;
     float_array[i * vertex_t.ATTRIB_SIZE + 1] = vertices[i].pos.y;
     float_array[i * vertex_t.ATTRIB_SIZE + 2] = vertices[i].pos.z;
+    
+    float_array[i * vertex_t.ATTRIB_SIZE + 3] = vertices[i].uv.x;
+    float_array[i * vertex_t.ATTRIB_SIZE + 4] = vertices[i].uv.y;
   }
   
   return float_array;

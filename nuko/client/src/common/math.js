@@ -23,6 +23,14 @@ export class vec2_t {
     );
   }
   
+  sub(v)
+  {
+    return new vec2_t(
+      this.x - v.x,
+      this.y - v.y
+    );
+  }
+  
   mul(v)
   {
     return new vec2_t(
@@ -37,6 +45,11 @@ export class vec2_t {
       this.x * f,
       this.y * f
     );
+  }
+  
+  dot(v)
+  {
+    return this.x * v.x + this.y * v.y;
   }
 }
 
@@ -100,6 +113,11 @@ export class vec3_t {
     const inverse_length = 1.0 / Math.sqrt(length_squared);
     
     return this.mulf(inverse_length);
+  }
+  
+  toString()
+  {
+    return "vec3_t(" + this.x + ", " + this.y + ", " + this.z + ")";
   }
 }
 

@@ -42,8 +42,8 @@ export class cgame_t {
     this.c_motion[this.player] = new motion_t();
     this.c_transform[this.player] = new transform_t();
     
-    this.c_transform[this.player].pos.y = 10;
-    this.c_motion[this.player].old_pos.y = 10;
+    this.c_transform[this.player].pos = new vec3_t(0, 2, 0);
+    this.c_motion[this.player].old_pos = this.c_transform[this.player].pos;
     
     this.usercmd = null;
     this.bsp = null;
@@ -169,6 +169,8 @@ export class cgame_t {
   clip_map()
   {
     this.c_pmove.grounded = false;
+    document.getElementById("test").innerHTML = "";
+    
     if (this.bsp)
       this.clip_map_R(this.bsp.root, new plane_t(new vec3_t(0, 1, 0), -100));
   }
@@ -176,6 +178,7 @@ export class cgame_t {
   clip_map_R(node, min_plane)
   {
     const SPHERE_RADIUS = 0.5;
+    const CAPSULE_HEIGHT = 1.0;
     const COS_GROUND_INCLINE = Math.cos(45 * Math.PI / 180.0);
     const UP = new vec3_t(0, 1, 0);
     
@@ -184,7 +187,10 @@ export class cgame_t {
     
     const pos = this.c_transform[this.player].pos;
     
-    const dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance - SPHERE_RADIUS;
+    const top_dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance - SPHERE_RADIUS;
+    const bottom_dist_from_plane = node.plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0))) - node.plane.distance - SPHERE_RADIUS;
+    
+    const dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane);
     
     if (dist_from_plane > -2 * SPHERE_RADIUS)
       this.clip_map_R(node.ahead, min_plane);
@@ -194,8 +200,10 @@ export class cgame_t {
         min_plane = new plane_t(node.plane.normal, dist_from_plane);
       
       if (node.type == brush_t.BRUSH_SOLID) {
-        if (min_plane.normal.dot(UP) > COS_GROUND_INCLINE)
+        if (min_plane.normal.dot(UP) > COS_GROUND_INCLINE) {
           this.c_pmove.grounded = true;
+        }
+          document.getElementById("test").innerHTML += min_plane.normal.toString() + "<BR>";
         
         const fix = min_plane.normal.mulf(-min_plane.distance);
         
