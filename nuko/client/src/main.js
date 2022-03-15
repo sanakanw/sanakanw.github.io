@@ -7,12 +7,9 @@ function main()
 {
   const client = new client_t();
   
-  const main_loop = () => {
+  setInterval(function() {
     client.update();
-    window.requestAnimationFrame(main_loop);
-  };
-  
-  window.requestAnimationFrame(main_loop);
+  }, cgame_t.TICKRATE);
 }
 
 main();

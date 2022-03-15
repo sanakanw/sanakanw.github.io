@@ -9,7 +9,7 @@ import { bsp_t } from "../common/bsp.js";
 import { vec3_t, quat_t, plane_t } from "../common/math.js";
 
 const SPHERE_RADIUS = 0.3;
-const CAPSULE_HEIGHT = 0.7;
+const CAPSULE_HEIGHT = 1.0;
 
 function pmove_accelerate(vel, wish_dir, accel, wish_speed)
 {
@@ -45,7 +45,7 @@ export class cgame_t {
     this.c_motion[this.player] = new motion_t();
     this.c_transform[this.player] = new transform_t();
     
-    this.c_transform[this.player].pos = new vec3_t(0, 2, 0);
+    this.c_transform[this.player].pos = new vec3_t(0, 10, 0);
     this.c_motion[this.player].old_pos = this.c_transform[this.player].pos;
     
     this.usercmd = null;
@@ -135,7 +135,7 @@ export class cgame_t {
     
     let accel_speed;
     if (this.c_pmove.grounded)
-      accel_speed = pmove_accelerate(vel, wish_dir, 2.0, 6.0);
+      accel_speed = pmove_accelerate(vel, wish_dir, 1.0, 6.0);
     else
       accel_speed = pmove_accelerate(vel, wish_dir, 1.2, 1.5);
     
@@ -177,9 +177,9 @@ export class cgame_t {
     this.c_pmove.grounded = false;
     
     if (this.bsp) {
-      const fixes = this.clip_map_R(this.bsp.root, new plane_t(new vec3_t(0, 1, 0), 0), -100);
       
-      document.getElementById("test").innerHTML = fixes.toString();
+      document.getElementById("test").innerHTML = ""; //fixes.toString();
+      const fixes = this.clip_map_R(this.bsp.root, new plane_t(new vec3_t(0, 1, 0), 0), -100);
       
       for (const plane of fixes) {
         if (plane.normal.dot(UP) > COS_GROUND_INCLINE)
@@ -187,14 +187,13 @@ export class cgame_t {
         
         const pos = this.c_transform[this.player].pos;
         
-        const top_dist_from_plane = plane.normal.dot(pos) - plane.distance - SPHERE_RADIUS;
-        const bottom_dist_from_plane = plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0))) - plane.distance - SPHERE_RADIUS;
+        const top_dist_from_plane = plane.normal.dot(pos);
+        const bottom_dist_from_plane = plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0)));
         
-        const dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane);
+        const dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane) - plane.distance - SPHERE_RADIUS;
         
         if (dist_from_plane < 0) {
           const fix = plane.normal.mulf(-dist_from_plane);
-          
           this.c_transform[this.player].pos = this.c_transform[this.player].pos.add(fix);
         }
       }
@@ -203,7 +202,6 @@ export class cgame_t {
   
   clip_map_R(node, min_plane, min_dist)
   {
-    
     const fixes = [];
     
     if (!node)
@@ -211,23 +209,23 @@ export class cgame_t {
     
     const pos = this.c_transform[this.player].pos;
     
-    const top_dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance - SPHERE_RADIUS;
-    const bottom_dist_from_plane = node.plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0))) - node.plane.distance - SPHERE_RADIUS;
+    const top_dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance ;
+    const bottom_dist_from_plane = node.plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0))) - node.plane.distance;
     
-    const dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane);
+    const min_dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane) - SPHERE_RADIUS;
+    const max_dist_from_plane = Math.max(top_dist_from_plane, bottom_dist_from_plane) + SPHERE_RADIUS;
     
-    if (dist_from_plane > -2 * SPHERE_RADIUS)
+    if (max_dist_from_plane > 0)
       fixes.push(...this.clip_map_R(node.ahead, min_plane, min_dist));
     
-    if (dist_from_plane < 0) {
-      if (dist_from_plane > min_dist) {
+    if (min_dist_from_plane < 0) {
+      if (min_dist_from_plane > min_dist) {
         min_plane = node.plane;
-        min_dist = dist_from_plane;
+        min_dist = min_dist_from_plane;
       }
       
-      if (node.type == brush_t.BRUSH_SOLID) {
+      if (node.type == brush_t.BRUSH_SOLID)
         fixes.push(min_plane);
-      }
       
       fixes.push(...this.clip_map_R(node.behind, min_plane, min_dist));
     }
