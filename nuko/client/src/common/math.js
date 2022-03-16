@@ -117,7 +117,7 @@ export class vec3_t {
   
   toString()
   {
-    return "vec3_t(" + this.x + ", " + this.y + ", " + this.z + ")";
+    return "vec3_t(" + this.x.toFixed(2) + ", " + this.y.toFixed(2) + ", " + this.z.toFixed(2) + ")";
   }
 }
 
@@ -197,7 +197,7 @@ export class plane_t {
   
   toString()
   {
-    return "plane_t(" + this.normal + ", " + this.distance + ")";
+    return "plane_t(" + this.normal + ", " + this.distance.toFixed(2) + ")";
   }
 }
 

@@ -1,12 +1,10 @@
 "use strict";
 
-// TODO: fix face gets culled, leaving faulty bevel detection
-
 import { vertex_t } from "./vertex.js";
 import { vec3_t, plane_t } from "./math.js";
 import { material_t, brush_t, face_t } from "./map.js";
 
-const DOT_DEGREE = 0.0001;
+const DOT_DEGREE = 0.001;
 
 class bspnode_t {
   constructor(type, plane)
@@ -26,13 +24,21 @@ class split_t {
   }
 }
 
+class splitbrush_t {
+  constructor(faces, planes)
+  {
+    this.faces = faces;
+    this.planes = planes;
+  }
+}
+
 export class bsp_t {
   constructor(map_handle)
   {
-    this.root = brush_collapse(map_handle.brushes[0]);
+    this.root = brush_collapse(new splitbrush_t(map_handle.brushes[0].faces, []));
     
     for (let i = 1; i < map_handle.brushes.length; i++)
-      brush_insert_R(this.root, map_handle.brushes[i]);
+      brush_insert_R(this.root, new splitbrush_t(map_handle.brushes[i].faces, []));
   }
 }
 
@@ -84,7 +90,7 @@ function split_face(face, plane)
   const ahead = [];
   
   for (const vertex of face.vertices) {
-    const dist = plane.normal.dot(vertex.pos) - plane.distance;
+    const dist = vertex.pos.dot(plane.normal) - plane.distance;
     
     if (dist < -DOT_DEGREE) {
       behind.push(vertex);
@@ -132,13 +138,32 @@ function split_brush(brush, plane)
     faces_ahead.push(...split.ahead);
   }
   
+  if (faces_behind.length == 0 || faces_ahead.length == 0) {
+    if (faces_behind.length == brush.faces.length)
+      return new split_t(brush, null);
+    else if (faces_ahead.length == brush.faces.length)
+      return new split_t(null, brush);
+  }
+  
   let brush_behind = null;
-  if (faces_behind.length > 0)
-    brush_behind = new brush_t(faces_behind, brush.material);
+  if (faces_behind.length > 0) {
+    const planes = brush.planes.slice();
+    
+    if (faces_ahead.length == 0)
+      planes.push(plane);
+    
+    brush_behind = new splitbrush_t(faces_behind, planes);
+  }
   
   let brush_ahead = null;
-  if (faces_ahead.length > 0)
-    brush_ahead = new brush_t(faces_ahead, brush.material);
+  if (faces_ahead.length > 0) {
+    const planes = brush.planes.slice();
+    
+    if (faces_behind.length == 0)
+      planes.push(new plane_t(plane.normal.mulf(-1), plane.distance));
+    
+    brush_ahead = new splitbrush_t(faces_ahead, planes);
+  }
   
   return new split_t(brush_behind, brush_ahead);
 }
@@ -151,24 +176,7 @@ function face_to_plane(face)
 
 function brush_to_planes(brush)
 {
-  const planes = [];
-  
-  for (let i = 0; i < brush.faces.length; i++) {
-    const plane = face_to_plane(brush.faces[i]);
-    
-    let is_unique = true;
-    for (let j = 0; j < planes.length; j++) {
-      const cos_normal = plane.normal.dot(planes[j].normal);
-      
-      if (cos_normal >= (1 - DOT_DEGREE))
-        is_unique = false;
-    }
-    
-    if (is_unique)
-      planes.push(plane);
-  }
-  
-  return planes;
+  return brush.faces.map(face_to_plane);
 }
 
 function get_shared_vertices(a, b)
@@ -186,21 +194,9 @@ function get_shared_vertices(a, b)
   return shared;
 }
 
-function axis_align(normal)
-{
-  const flat_bevel_degree = Math.cos(30);
-  const dot = normal.dot(new vec3_t(0, 1, 0));
-  
-  if (Math.abs(dot) > flat_bevel_degree)
-    return new vec3_t(0, dot > 0 ? 1 : -1, 0);
-  else
-    return new vec3_t(normal.x, normal.y, 0).normalize();
-  
-}
-
 function gen_bevel_planes(brush)
 {
-  const COS_MAX_THETA = Math.cos(60 * Math.PI / 180.0);
+  const COS_MAX_THETA = Math.cos(45 * Math.PI / 180.0);
   
   const bevel = [];
   
@@ -209,14 +205,29 @@ function gen_bevel_planes(brush)
       const shared = get_shared_vertices(brush.faces[i], brush.faces[j]);
       if (shared.length == 2) {
         const d = brush.faces[i].normal.dot(brush.faces[j].normal);
-        if (d < -DOT_DEGREE) {
-          const normal = axis_align(brush.faces[i].normal.add(brush.faces[j].normal).normalize());
-          const distance = shared[0].pos.dot(normal);
+        if (d < COS_MAX_THETA) {
+          const normal = brush.faces[i].normal.add(brush.faces[j].normal).normalize();
+          const distance = shared[0].pos.dot(normal) - 0.05;
           
           bevel.push(new plane_t(normal, distance));
-        } else if (d < COS_MAX_THETA) {
-          const normal = brush.faces[i].normal.add(brush.faces[j].normal).normalize();
-          const distance = shared[0].pos.dot(normal);
+        }
+      }
+    }
+    
+    for (const plane of brush.planes) {
+      const shared = [];
+      for (const v of brush.faces[i].vertices) {
+        const dot = v.pos.dot(plane.normal) - plane.distance;
+        
+        if (Math.abs(dot) < +DOT_DEGREE)
+          shared.push(v);
+      }
+      
+      if (shared.length == 2) {
+        const d = brush.faces[i].normal.dot(plane.normal);
+        if (d < COS_MAX_THETA) {
+          const normal = brush.faces[i].normal.add(plane.normal).normalize();
+          const distance = shared[0].pos.dot(normal) - 0.1;
           
           bevel.push(new plane_t(normal, distance));
         }
@@ -229,10 +240,25 @@ function gen_bevel_planes(brush)
 
 function brush_collapse(brush)
 {
-  const planes = brush_to_planes(brush);
+  const brush_planes = brush_to_planes(brush);
   const bevel = gen_bevel_planes(brush);
   
-  planes.push(...bevel);
+  brush_planes.push(...bevel);
+  
+  const planes = [];
+  
+  for (let i = 0; i < brush_planes.length; i++) {
+    let is_unique = true;
+    for (let j = i + 1; j < brush_planes.length; j++) {
+      const cos_normal = brush_planes[i].normal.dot(brush_planes[j].normal);
+      
+      if (cos_normal >= (1 - DOT_DEGREE))
+        is_unique = false;
+    }
+    
+    if (is_unique)
+      planes.push(brush_planes[i]);
+  }
   
   if (planes.length == 1) {
     return new bspnode_t(brush_t.BRUSH_SOLID, planes[0]);

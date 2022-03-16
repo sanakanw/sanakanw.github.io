@@ -45,7 +45,7 @@ export class cgame_t {
     this.c_motion[this.player] = new motion_t();
     this.c_transform[this.player] = new transform_t();
     
-    this.c_transform[this.player].pos = new vec3_t(0, 10, 0);
+    this.c_transform[this.player].pos = new vec3_t(0, 2, 0);
     this.c_motion[this.player].old_pos = this.c_transform[this.player].pos;
     
     this.usercmd = null;
@@ -67,6 +67,8 @@ export class cgame_t {
     this.apply_friction();
     this.clip_map();
     this.integrate_motion();
+    
+    document.getElementById("test").innerHTML = this.c_transform[this.player].pos;
   }
   
   reset_force()
@@ -137,7 +139,7 @@ export class cgame_t {
     if (this.c_pmove.grounded)
       accel_speed = pmove_accelerate(vel, wish_dir, 1.0, 6.0);
     else
-      accel_speed = pmove_accelerate(vel, wish_dir, 1.5, 2.0);
+      accel_speed = pmove_accelerate(vel, wish_dir, 4.0, 1.5);
     
     this.c_motion[this.player].apply_force(wish_dir.mulf(accel_speed));
   }
@@ -209,7 +211,7 @@ export class cgame_t {
     
     const pos = this.c_transform[this.player].pos;
     
-    const top_dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance ;
+    const top_dist_from_plane = node.plane.normal.dot(pos) - node.plane.distance;
     const bottom_dist_from_plane = node.plane.normal.dot(pos.sub(new vec3_t(0, CAPSULE_HEIGHT, 0))) - node.plane.distance;
     
     const min_dist_from_plane = Math.min(top_dist_from_plane, bottom_dist_from_plane) - SPHERE_RADIUS;
