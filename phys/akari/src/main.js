@@ -402,10 +402,12 @@ function frame(phys)
 
 function load_planes(phys)
 {
-  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, 1), to_rad(60)), -20));
-  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, 1), to_rad(-30)), -20));
-  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, -1), to_rad(60)), -20));
-  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, -1), to_rad(-30)), -20))
+  const theta = 2;
+  
+  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(1, 0), to_rad(theta)), -30));
+  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, 1), to_rad(theta)), -30));
+  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(-1, 0), to_rad(theta)), -30));
+  phys.planes.push(new plane_t(vec2_t.rotate(new vec2_t(0, -1), to_rad(theta)), -30))
 }
 
 function load_cloth(phys)
