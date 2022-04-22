@@ -324,21 +324,19 @@ class phys_t {
       
       const l = vec2_t.length(delta_pos);
       
-      if (l > dynamic_constraint.l || l < 0.5 * dynamic_constraint.l) {
-        const n = vec2_t.normalize(delta_pos);
-        
-        const jv_a = new vec2_t(n.x, n.y);
-        const jv_b = new vec2_t(-n.x, -n.y);
-        
-        const beta = 2.0 * (l - dynamic_constraint.l);
-        
-        const effective_mass = 1 / a.mass + 1 / b.mass;
-        
-        const j = -(vec2_t.dot(jv_a, a.vel) + vec2_t.dot(jv_b, b.vel)) / effective_mass - beta;
-        
-        a.vel = vec2_t.add(a.vel, vec2_t.mulf(jv_a, j));
-        b.vel = vec2_t.add(b.vel, vec2_t.mulf(jv_b, j));
-      }
+      const n = vec2_t.normalize(delta_pos);
+      
+      const jv_a = new vec2_t(n.x, n.y);
+      const jv_b = new vec2_t(-n.x, -n.y);
+      
+      const beta = 2.0 * (l - dynamic_constraint.l);
+      
+      const effective_mass = 1 / a.mass + 1 / b.mass;
+      
+      const j = -(vec2_t.dot(jv_a, a.vel) + vec2_t.dot(jv_b, b.vel)) / effective_mass - beta;
+      
+      a.vel = vec2_t.add(a.vel, vec2_t.mulf(jv_a, j));
+      b.vel = vec2_t.add(b.vel, vec2_t.mulf(jv_b, j));
     }
   }
   
@@ -414,9 +412,9 @@ function load_cloth(phys)
 {
   load_planes(phys);
   
-  const w = 4;
-  const h = 4;
-  const l = 3;
+  const w = 10;
+  const h = 10;
+  const l = 2.5;
   
   for (let i = 0; i < w; i++) {
     for (let j = 0; j < h; j++) {
@@ -448,7 +446,7 @@ function load_cloth(phys)
     new circle_t(
       new vec2_t(rand() * 20, rand() * 20),
       new vec2_t(0, 0),
-      1.0,
+      10.0,
       0.5, 4.0));
 }
 
@@ -467,7 +465,7 @@ function load_capsule(phys)
       new vec2_t(rand() * 20, rand() * 20),
       new vec2_t(0, 0), 0.0,
       1.0, 1.0, 0.0,
-      new vec2_t(0, 2.0), 1.0);
+      new vec2_t(0, 1.0), 1.0);
     
     phys.dynamic_constraints.push(new constraint_t(a, b, 4));
     
