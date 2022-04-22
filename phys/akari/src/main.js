@@ -449,7 +449,7 @@ function load_cloth(phys)
       new vec2_t(rand() * 20, rand() * 20),
       new vec2_t(0, 0),
       1.0,
-      0.0, 4.0));
+      0.5, 4.0));
 }
 
 function load_capsule(phys)
