@@ -441,6 +441,13 @@ function load_cloth(phys)
       phys.dynamic_constraints.push(new constraint_t(phys.circles[j + i * h], phys.circles[j + (i + 1) * h], l));
     }
   }
+  
+  phys.circles.push(
+    new circle_t(
+      new vec2_t(rand() * 20, rand() * 20),
+      new vec2_t(0, 0),
+      1.0,
+      0.0, 4.0));
 }
 
 function load_capsule(phys)
