@@ -454,7 +454,7 @@ function load_capsule(phys)
 {
   load_planes(phys);
   
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     const a = new capsule_t(
       new vec2_t(rand() * 20, rand() * 20),
       new vec2_t(0, 0), 0.0,
@@ -467,10 +467,19 @@ function load_capsule(phys)
       1.0, 1.0, 0.0,
       new vec2_t(0, 1.0), 1.0);
     
+    const c = new capsule_t(
+      new vec2_t(rand() * 20, rand() * 20),
+      new vec2_t(0, 0), 0.0,
+      1.0, 1.0, 0.0,
+      new vec2_t(0, 1.0), 1.0);
+    
     phys.dynamic_constraints.push(new constraint_t(a, b, 4));
+    phys.dynamic_constraints.push(new constraint_t(b, c, 4));
+    phys.dynamic_constraints.push(new constraint_t(c, a, 4));
     
     phys.capsules.push(a);
     phys.capsules.push(b);
+    phys.capsules.push(c);
   }
 }
 

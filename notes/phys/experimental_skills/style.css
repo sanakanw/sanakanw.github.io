@@ -1,0 +1,29 @@
+body {
+  margin-left: 20%;
+  font-family: "Times New Roman", Times, serif;
+  width: 60%;
+}
+
+h1, h2 {
+  border-bottom: 1px #aaaaaa solid;
+}
+
+blockquote {
+  border: 1px solid;
+  background: #ededed;
+  padding: 0.2em 10px 0.2em 20px;
+}
+
+img {
+  border: 1px solid;
+  width: 100%;
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+td {
+  padding: 0.2em;
+}
