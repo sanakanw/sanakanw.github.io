@@ -57,7 +57,7 @@ export class vec2_t {
     if (d > 0)
       return vec2_t.mulf(v, 1.0 / d);
     else
-      return 0;
+      return new vec2_t(0.0, 0.0);
   }
 };
 

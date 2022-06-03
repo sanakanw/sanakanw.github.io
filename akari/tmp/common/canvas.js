@@ -12,6 +12,12 @@ function screen_space(pos)
   return new vec2_t(pos.x * SCALE + c.width / 2.0, -pos.y * SCALE + c.height / 2.0);
 }
 
+export function d_color(r, g, b)
+{
+  ctx.fillStyle = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")";
+  ctx.strokeStyle = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")";
+}
+
 export function d_clear()
 {
   ctx.clearRect(0, 0, c.width, c.height);
