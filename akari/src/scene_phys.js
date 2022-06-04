@@ -266,19 +266,19 @@ export class scene_phys_t {
       
       for (let i = 0; i < this.static_constraints.length; i++) {
         if (this.static_constraints[i].a === entity)
-          this.static_constraints.splice(i);
+          this.static_constraints.splice(i, 1);
         
         if (entity == -1) {
           const dist = vec2_t.length(vec2_t.sub(input.get_mouse_pos(), this.static_constraints[i].b));
           if (dist < 1)
-            this.static_constraints.splice(i);
+            this.static_constraints.splice(i, 1);
         }
       }
       
       for (let i = 0; i < this.constraints.length; i++) {
         if (this.constraints[i].a == entity
         || this.constraints[i].b == entity)
-          this.constraints.splice(i);
+          this.constraints.splice(i, 1);
       }
     }
     
