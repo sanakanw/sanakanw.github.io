@@ -289,10 +289,10 @@ export class scene_phys_t {
           this.shape_a = entity;
         } else if (this.shape_a != entity) {
           if (entity == -1) {
-            this.static_constraints.push(new constraint_t(this.shape_a, input.get_mouse_pos(), 4));
+            this.static_constraints.push(new constraint_t(this.shape_a, input.get_mouse_pos(), 3));
             this.shape_a = -1;
           } else {
-            this.constraints.push(new constraint_t(this.shape_a, entity, 4));
+            this.constraints.push(new constraint_t(this.shape_a, entity, 3));
             this.shape_a = -1;
           }
         }
