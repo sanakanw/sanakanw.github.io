@@ -21,19 +21,20 @@ function E(pos)
 }
 
 export class scene_wave_t {
-  width = 40;
-  height = 40;
-
-  H_field = [];
-  E_field = [];
-
-  points = [];
-  planes = [];
-  
-  t = 0;
+  width;
+  height;
+  H_field;
+  E_field;
+  t;
   
   load()
   {
+    this.width = 40;
+    this.height = 40;
+    this.H_field = [];
+    this.E_field = [];
+    this.t = 0;
+    
     for (let y = 0; y < this.height; y++) {
       this.E_field[y] = [];
       this.H_field[y] = [];
@@ -48,12 +49,9 @@ export class scene_wave_t {
   frame()
   {
     if (input.get_mouse_button())
-      this.emit(input.get_mouse_pos(), 1.0);
+      this.emit(input.get_mouse_pos(), 3.0);
     
     this.t += config.TIMESTEP;
-    
-    this.emit(new vec2_t(0.0, +Math.cos(this.t * 1) * 4.0), -0.1);
-    this.emit(new vec2_t(0.0, -Math.cos(this.t * 1) * 4.0), +0.1);
     
     this.H_field_update();
     this.E_field_update();
@@ -72,10 +70,10 @@ export class scene_wave_t {
         const E_pos = this.E_at(pos);
         const H_pos = this.H_at(pos);
         
-        const len_E = Math.min(40.0 * vec2_t.length(E_pos), 1.0);
+        const len_E = Math.min(0.5 * vec2_t.length(E_pos), 1.0);
         const dir_E = vec2_t.mulf(vec2_t.normalize(E_pos), len_E);
         
-        draw.circle(pos, 0.1 + Math.min(5.0 * Math.abs(H_pos), 0.5));
+        draw.circle(pos, 0.1 + Math.min(0.9 * Math.abs(H_pos), 0.5));
         draw.line(pos, vec2_t.add(pos, dir_E));
       }
     }
@@ -98,7 +96,7 @@ export class scene_wave_t {
         const pos = new vec2_t(x - this.width / 2, y - this.height / 2);
         const curl = this.curl_E_at(pos);
         
-        this.H_field[y][x] += -curl * config.TIMESTEP * 50.0;
+        this.H_field[y][x] += -curl * config.TIMESTEP * 9.0;
       }
     }
   }
@@ -112,11 +110,11 @@ export class scene_wave_t {
         const H_pos = this.H_at(pos);
         
         const curl_H = this.curl_H_at(pos);
-        const J = vec2_t.mulf(this.E_field[y][x], 5.0);
+        const J = vec2_t.mulf(this.E_field[y][x], 0.15);
         
         const dE = vec2_t.sub(curl_H, J);
         
-        this.E_field[y][x] = vec2_t.add(this.E_field[y][x], vec2_t.mulf(dE, config.TIMESTEP));
+        this.E_field[y][x] = vec2_t.add(this.E_field[y][x], vec2_t.mulf(dE, 15 * config.TIMESTEP));
       }
     }
   }

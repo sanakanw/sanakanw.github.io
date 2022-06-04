@@ -10,6 +10,9 @@ function main()
   const scene_phys = new scene_phys_t();
   const scene_wave = new scene_wave_t();
   
+  document.getElementById("box").onclick = () => scene_load(scene_phys);
+  document.getElementById("wave").onclick = () => scene_load(scene_wave);
+  
   scene_load(scene_phys);
   
   setInterval(function() {

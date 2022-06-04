@@ -79,17 +79,6 @@ class shape_t {
       
       this.planes.push(new plane_t(normal, distance));
     }
-    
-    /*
-    for (let i = 0; i < this.vertices.length; i++) {
-      const arm = vec2_t.rotate(vec2_t.sub(this.vertices[i], this.pos), d_rot);
-      this.vertices[i] = vec2_t.add(this.pos, arm);
-    }
-    
-    for (const plane of this.planes) {
-      plane.normal = vec2_t.rotate(plane.normal, d_rot);
-      plane.distance = 
-    }*/
   }
 };
 
@@ -197,22 +186,45 @@ function clip_shape_shape(a, b)
   return new clip_t(max_plane.normal, r1, r2);
 }
 
+class constraint_t {
+  constructor(a, b, l)
+  {
+    this.a = a;
+    this.b = b;
+    this.l = l;
+  }
+};
+
 const h = 10;
 const dt = config.TIMESTEP / h;
 
 export class scene_phys_t {
-  shape = {};
-  motion = {};
-  
-  planes = [];
-  
-  selected_shape = null;
-  
-  num_entities = 0;
+  shape;
+  motion;
+  planes;
+  constraints;
+  static_constraints;
+  selected_shape;
+  shape_a;
+  next_select;
+  num_entities;
   
   load()
   {
+    this.shape = {};
+    this.motion = {};
+    this.planes = [];
+    this.constraints = [];
+    this.static_constraints = [];
+    this.selected_shape = -1;
+    this.shape_a = -1;
+    this.next_select = true;
     this.num_entities = 0;
+    
+    this.planes.push(new plane_t(new vec2_t(+1, 0), -20));
+    this.planes.push(new plane_t(new vec2_t(0, +1), -20));
+    this.planes.push(new plane_t(new vec2_t(-1, 0), -20));
+    this.planes.push(new plane_t(new vec2_t(0, -1), -20));
     
     const square_vertices = [
       new vec2_t(-1, +1),
@@ -221,15 +233,22 @@ export class scene_phys_t {
       new vec2_t(-1, -1)
     ];
     
-    this.planes.push(new plane_t(new vec2_t(+1, 0), -20));
-    this.planes.push(new plane_t(new vec2_t(0, +1), -20));
-    this.planes.push(new plane_t(new vec2_t(-1, 0), -20));
-    this.planes.push(new plane_t(new vec2_t(0, -1), -20));
+    this.spawn_boxes();
+  }
+  
+  spawn_boxes()
+  {
+    const square_vertices = [
+      new vec2_t(-1, +1),
+      new vec2_t(+1, +1),
+      new vec2_t(+1, -1),
+      new vec2_t(-1, -1)
+    ];
     
     const range = 40;
     for (let i = 0; i < 60; i++) {
       const box = this.add_entity();
-      this.motion[box] = new motion_t(5.0);
+      this.motion[box] = new motion_t(1.0);
       this.shape[box] = new shape_t(new vec2_t(rand() * range, rand() * range), 0.0, square_vertices);
     }
   }
@@ -238,29 +257,130 @@ export class scene_phys_t {
   {
     draw.clear();
     
-    if (input.get_mouse_button()) {
-      for (let i = 0; i < this.num_entities; i++) {
-        if (!(i in this.motion) && !(i in this.shape))
-          continue;
+    if (input.get_mouse_button() && this.selected_shape == -1) {
+      this.selected_shape = this.find_entity(input.get_mouse_pos());
+    }
+    
+    if (input.get_key("C")) {
+      const entity = this.find_entity(input.get_mouse_pos());
+      
+      for (let i = 0; i < this.static_constraints.length; i++) {
+        if (this.static_constraints[i].a === entity)
+          this.static_constraints.splice(i);
         
-        const dist = vec2_t.length(vec2_t.sub(input.get_mouse_pos(), this.shape[i].pos));
+        if (entity == -1) {
+          const dist = vec2_t.length(vec2_t.sub(input.get_mouse_pos(), this.static_constraints[i].b));
+          if (dist < 1)
+            this.static_constraints.splice(i);
+        }
+      }
+      
+      for (let i = 0; i < this.constraints.length; i++) {
+        if (this.constraints[i].a == entity
+        || this.constraints[i].b == entity)
+          this.constraints.splice(i);
+      }
+    }
+    
+    if (input.get_key("W")) {
+      if (this.next_select) {
+        const entity = this.find_entity(input.get_mouse_pos());
+        if (this.shape_a == -1) {
+          this.shape_a = entity;
+        } else if (this.shape_a != entity) {
+          if (entity == -1) {
+            this.static_constraints.push(new constraint_t(this.shape_a, input.get_mouse_pos(), 4));
+            this.shape_a = -1;
+          } else {
+            this.constraints.push(new constraint_t(this.shape_a, entity, 4));
+            this.shape_a = -1;
+          }
+        }
         
-        if (dist < 1.0)
-          this.selected_shape = i;
+        this.next_select = false;
       }
     } else {
+      this.next_select = true;
+    }
+    
+    if (!input.get_mouse_button()) {
       this.selected_shape = -1;
     }
     
     for (let i = 0; i < h; i++) {
       this.follow_cursor();
       this.apply_gravity();
+      this.apply_static_constraints();
+      this.apply_constraints();
       this.clip_shape_plane();
       this.clip_shape_shape();
       this.integrate();
     }
     
     this.draw();
+  }
+  
+  find_entity(pos)
+  {
+    for (let i = 0; i < this.num_entities; i++) {
+      if (!(i in this.motion) && !(i in this.shape))
+        continue;
+      
+      const dist = vec2_t.length(vec2_t.sub(pos, this.shape[i].pos));
+      
+      if (dist < 1.0)
+        return i;
+    }
+    
+    return -1;
+  }
+  
+  apply_constraints()
+  {
+    for (const c of this.constraints) {
+      const delta_pos = vec2_t.sub(this.shape[c.a].pos, this.shape[c.b].pos);
+      
+      const m_a = 1.0 / this.motion[c.a].mass;
+      const m_b = 1.0 / this.motion[c.b].mass;
+      
+      const jt_va = delta_pos;
+      const jt_vb = vec2_t.mulf(delta_pos, -1);
+      
+      const v_a = this.motion[c.a].vel;
+      const v_b = this.motion[c.b].vel;
+      
+      const b = 0.1 / dt * (vec2_t.length(delta_pos) - c.l);
+      const jv = vec2_t.dot(jt_va, v_a) + vec2_t.dot(jt_vb, v_b);
+      const effective_mass = vec2_t.dot(jt_va, jt_va) * m_a + vec2_t.dot(jt_vb, jt_vb) * m_b;
+      const lambda = -(jv + b) / effective_mass;
+      
+      const dv_a = vec2_t.mulf(jt_va, lambda * m_a);
+      const dv_b = vec2_t.mulf(jt_vb, lambda * m_b);
+      
+      this.motion[c.a].vel = vec2_t.add(this.motion[c.a].vel, dv_a);
+      this.motion[c.b].vel = vec2_t.add(this.motion[c.b].vel, dv_b);
+    }
+  }
+  
+  apply_static_constraints()
+  {
+    for (const c of this.static_constraints) {
+      const delta_pos = vec2_t.sub(this.shape[c.a].pos, c.b);
+      
+      const m_a = 1.0 / this.motion[c.a].mass;
+      
+      const jt_va = delta_pos;
+      const v_a = this.motion[c.a].vel;
+      
+      const b = 0.1 / dt * (vec2_t.length(delta_pos) - c.l);
+      const jv = vec2_t.dot(jt_va, v_a);
+      const effective_mass = vec2_t.dot(jt_va, jt_va) * m_a;
+      const lambda = -(jv + b) / effective_mass;
+      
+      const dv_a = vec2_t.mulf(jt_va, lambda * m_a);
+      
+      this.motion[c.a].vel = vec2_t.add(this.motion[c.a].vel, dv_a);
+    }
   }
   
   apply_gravity()
@@ -325,7 +445,7 @@ export class scene_phys_t {
         
         const c = vec2_t.dot(vec2_t.sub(clip.r1, clip.r2), clip.normal);
         
-        const b = 0.1 / dt * c;
+        const b = 0.05 / dt * c;
         const jv = vec2_t.dot(jt_v, v) + jt_w * w;
         const effective_mass = vec2_t.dot(jt_v, jt_v) + jt_w * jt_w * m_i;
         
@@ -377,7 +497,7 @@ export class scene_phys_t {
         
         const c = vec2_t.dot(vec2_t.sub(clip.r1, clip.r2), clip.normal);
         
-        const b = 0.05 / dt * c;
+        const b = 0.1 / dt * c;
         const jv = vec2_t.dot(jt_va, v_a) + w_a * jt_wa + vec2_t.dot(jt_vb, v_b) + w_b * jt_wb;
         const effective_mass = vec2_t.dot(jt_va, jt_va) * m_a + jt_wa * jt_wa * i_a + vec2_t.dot(jt_vb, jt_vb) * m_b + jt_wb * jt_wb * i_b;
         
@@ -401,14 +521,21 @@ export class scene_phys_t {
   
   draw()
   {
+    if (this.shape_a != -1)
+      draw.circle(this.shape[this.shape_a].pos, 0.2);
+    
     for (let i = 0; i < this.num_entities; i++) {
       if (!(i in this.shape))
         continue;
       
       draw_shape(this.shape[i]);
-      
-      // for (const plane of this.shape[i].planes) draw.plane(plane);
     }
+    
+    for (const c of this.constraints)
+      draw.line(this.shape[c.a].pos, this.shape[c.b].pos);
+    
+    for (const c of this.static_constraints)
+      draw.line(this.shape[c.a].pos, c.b);
     
     for (const plane of this.planes)
       draw.plane(plane);
