@@ -221,10 +221,10 @@ export class scene_phys_t {
     this.next_select = true;
     this.num_entities = 0;
     
-    this.planes.push(new plane_t(new vec2_t(+1, 0), -20));
-    this.planes.push(new plane_t(new vec2_t(0, +1), -20));
-    this.planes.push(new plane_t(new vec2_t(-1, 0), -20));
-    this.planes.push(new plane_t(new vec2_t(0, -1), -20));
+    this.planes.push(new plane_t(new vec2_t(+1, 0), -30));
+    this.planes.push(new plane_t(new vec2_t(0, +1), -30));
+    this.planes.push(new plane_t(new vec2_t(-1, 0), -30));
+    this.planes.push(new plane_t(new vec2_t(0, -1), -30));
     
     const square_vertices = [
       new vec2_t(-1, +1),
