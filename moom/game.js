@@ -150,8 +150,8 @@ export class game_t {
   
   friends_spawn()
   {
-    if (this.friends.length < 10 && this.time > 4.0) {
-      const pos = new vec2_t((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
+    if (this.friends.length < 15 && this.time > 4.0) {
+      const pos = new vec2_t(Math.random() * 64, Math.random() * 64);
       this.friends.push(new friend_t(pos));
     }
   }
