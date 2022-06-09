@@ -44,7 +44,7 @@ function draw_rect(display, align, tex, xc, yc, w, h)
       const xt = Math.floor(tex.width * (xp - xp0) / (xp1 - xp0));
       
       const color = tex.get_rgb(xt, yt);
-      if (color[0] != 255 || color[1] != 0 || color[2] != 255)
+      if (color[0] < 240 || color[1] > 15 || color[2] < 240)
         display.put_pixel_rgb(color, xp, yp);
     }
   }
@@ -160,7 +160,7 @@ export class renderer_t {
         
         const color = tex.get_rgb(xt, yt);
         
-        if (color[0] == 255 && color[1] == 0 && color[2] == 255)
+        if (color[0] > 240 && color[1] < 15 && color[2] > 240)
           continue;
         
         const new_color = [
