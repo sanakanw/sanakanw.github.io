@@ -66,22 +66,33 @@ class player_t {
     if (client.get_attack() && time > this.next_attack) {
       this.snd_gun.play();
       
+      let min_dist = 100;
+      let min_friend = -1;
+      
       for (let i = 0; i < friends.length; i++) {
         const delta_pos = this.pos.sub(friends[i].pos);
         const normal = delta_pos.normalize();
         const distance = normal.dot(friends[i].pos);
         const dir = new vec2_t(0, 1).rotate(this.rot);
+        
         if (delta_pos.dot(dir) < 0) {
           const t = -(this.pos.dot(normal) - distance) / dir.dot(normal);
           const hit_pos = this.pos.add(dir.mulf(t));
           const tangent = normal.cross_up();
           const hit_range = hit_pos.dot(tangent) - friends[i].pos.dot(tangent);
+          
           if (Math.abs(hit_range) < 0.4) {
-            friends[i].hp--;
-            break;
+            const dist_from_plane = normal.dot(this.pos) - distance;
+            if (dist_from_plane < min_dist) {
+              min_dist = dist_from_plane;
+              min_friend = i;
+            }
           }
         }
       }
+      
+      if (min_friend != -1)
+        friends[min_friend].hp--;
       
       this.next_attack = time + 1.0;
     }
