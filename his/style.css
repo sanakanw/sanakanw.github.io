@@ -1,0 +1,20 @@
+body {
+  margin-left: 30%;
+  font-family: Iosevka;
+  width: 40%;
+}
+
+h1, h2 {
+  border-bottom: 1px #aaaaaa solid;
+}
+
+blockquote {
+  border: 1px solid;
+  background: #ededed;
+  padding: 0.2em 10px 0.2em 20px;
+}
+
+img {
+  border: 1px solid;
+  width: 100%;
+}
