@@ -555,6 +555,8 @@ function main()
   
   document.getElementById("reset").onclick = () => scene_phys.load();
   
+  draw.color(255, 255, 255);
+  
   setInterval(function() {
     scene_phys.frame();
   }, config.TICKRATE);

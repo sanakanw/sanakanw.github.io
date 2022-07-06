@@ -20,7 +20,8 @@ export class draw {
 
   static clear()
   {
-    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.fillStyle="rgb(0,0,0)";
+    ctx.fillRect(0, 0, c.width, c.height);
   }
 
   static circle(pos, radius)
@@ -29,6 +30,15 @@ export class draw {
     ctx.beginPath();
     ctx.arc(screen_pos.x, screen_pos.y, radius * config.SCALE, 0, 2 * Math.PI);
     ctx.stroke();
+  }
+  
+  static rect(pos, w, h)
+  {
+    const screen_pos = screen_space(pos);
+    ctx.beginPath();
+    ctx.rect(screen_pos.x, screen_pos.y - h * config.SCALE, w * config.SCALE, h * config.SCALE);
+    ctx.stroke();
+    ctx.closePath();
   }
 
   static line(a, b)
@@ -40,6 +50,7 @@ export class draw {
     ctx.moveTo(ss_a.x, ss_a.y);
     ctx.lineTo(ss_b.x, ss_b.y);
     ctx.stroke();
+    ctx.closePath();
   }
 
   static plane(plane)
