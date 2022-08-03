@@ -234,6 +234,7 @@ export class scene_phys_t {
     ];
     
     this.spawn_boxes();
+    // this.static_constraints.push(new constraint_t(0, new vec2_t(), 10));
   }
   
   spawn_boxes()
@@ -246,7 +247,7 @@ export class scene_phys_t {
     ];
     
     const range = 40;
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 50; i++) {
       const box = this.add_entity();
       this.motion[box] = new motion_t(1.0);
       this.shape[box] = new shape_t(new vec2_t(rand() * range, rand() * range), 0.0, square_vertices);
@@ -312,12 +313,49 @@ export class scene_phys_t {
       this.apply_gravity();
       this.apply_static_constraints();
       this.apply_constraints();
+      this.apply_test_constraint();
       this.clip_shape_plane();
       this.clip_shape_shape();
       this.integrate();
     }
     
     this.draw();
+  }
+  
+  apply_test_constraint()
+  {
+    const i = 0;
+    
+    const p1 = this.shape[i].vertices[0];
+    const p2 = new vec2_t(4, 0);
+    
+    const r = vec2_t.sub(this.shape[i].vertices[0], this.shape[i].pos);
+    
+    const delta_pos = vec2_t.sub(p1, p2);
+    
+    const m = 1.0 / this.motion[i].mass;
+    const m_i = 1.0 / (vec2_t.length(r) * this.motion[i].mass);
+    
+    const jt_v = delta_pos;
+    const jt_w = vec2_t.cross(r, vec2_t.add(delta_pos, r));
+    
+    const v = this.motion[i].vel;
+    const w = this.motion[i].ang_vel;
+    
+    const b = 0.1 / dt * (vec2_t.length(delta_pos) - 4);
+    const jv = vec2_t.dot(jt_v, v) + jt_w * w;
+    const effective_mass = vec2_t.dot(jt_v, jt_v) * m + jt_w * jt_w * m_i;
+    const lambda = -(jv + b) / effective_mass;
+    
+    const dv = vec2_t.mulf(jt_v, lambda * m);
+    const dw = jt_w * lambda * m_i;
+    
+    draw.circle(p1, 0.2);
+    draw.circle(p2, 0.2);
+    draw.line(p1, p2);
+    
+    this.motion[i].vel = vec2_t.add(this.motion[i].vel, dv);
+    this.motion[i].ang_vel += dw;
   }
   
   find_entity(pos)
@@ -449,7 +487,7 @@ export class scene_phys_t {
         const jv = vec2_t.dot(jt_v, v) + jt_w * w;
         const effective_mass = vec2_t.dot(jt_v, jt_v) + jt_w * jt_w * m_i;
         
-        const lambda = -(jv + b);
+        const lambda = -(jv + b) / effective_mass;
         
         if (lambda > 0) {
           const dv = vec2_t.mulf(jt_v, lambda * m);

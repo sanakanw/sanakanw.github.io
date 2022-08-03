@@ -37,6 +37,13 @@ function main()
     if (code != "")
       eval(code);
     
+    if (t > next_H) {
+      for (let i = -5; i < 5; i++) {
+        field.emit_H(new vec2_t(-10, i), 90);
+      }
+      next_H = t + 0.2;
+    }
+    
     if (input.get_mouse_button()) {
       switch (document.getElementById("brush").value) {
       case "burst":

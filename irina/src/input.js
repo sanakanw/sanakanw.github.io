@@ -51,6 +51,9 @@ export class input_t {
   
   get_key(key)
   {
+    if (this.keys[key.charCodeAt(0)] == undefined)
+      return false;
+    
     return this.keys[key.charCodeAt(0)];
   }
 };

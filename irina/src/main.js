@@ -33,12 +33,12 @@ class car_t {
   
   steer(w)
   {
-    this.wheel_dir += w;
+    this.wheel_dir = w;
   }
   
   wheel_reset()
   {
-    this.wheel_dir -= this.wheel_dir * 4 * TIMESTEP;
+    this.wheel_dir -= this.wheel_dir * 8 * TIMESTEP;
   }
   
   drag()
@@ -51,11 +51,11 @@ class car_t {
   
   wheel_forces()
   {
-    const is_brake = input.get_key(" ");
+const is_brake = input.get_key(" ");
     
-    const C_lat = 1.0;
-    const C_long = 0.02;
-    const r_C_long = is_brake ? (C_long + 0.3) : C_long;
+    const C_lat = 0.5;
+    const C_long = 0.01;
+    const r_C_long = is_brake ? (C_long + 0.5) : C_long;
     
     const r_r = vec2_t.mulf(this.dir, -1);
     const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, this.ang_vel));
@@ -71,7 +71,7 @@ class car_t {
     const f_normal = vec2_t.rotate(this.dir, this.wheel_dir);
     const f_tangent = vec2_t.cross_up(f_normal, 1);
     const f_alpha = vec2_t.dot(f_tangent, f_vel);
-    const f_beta = vec2_t.dot(f_normal, r_vel);
+    const f_beta = vec2_t.dot(f_normal, f_vel);
     const f_f_lateral = vec2_t.mulf(f_tangent, -C_lat * f_alpha);
     const f_f_longtitudinal = vec2_t.mulf(f_normal, -C_long * f_beta);
     
@@ -79,10 +79,10 @@ class car_t {
     const f_friction = vec2_t.add(r_f_longtitudinal, f_f_longtitudinal);
     const f_net = vec2_t.add(f_cornering, f_friction);
     
-    const a = vec2_t.length(r_f_lateral);
-    const I = 0.5;
-    const r_I = is_brake ? (I) : I;
-    const f_I = is_brake ? (I + a * 0.006) : I + a * 0.001;
+    const a = vec2_t.dot(vec2_t.add(this.force, f_net), this.dir) * 0.0001 + (is_brake ? 0.5 : 0);
+    const I = 1.0;
+    const r_I = I - a;
+    const f_I = I + a;
     
     const ang_accel = r_I * vec2_t.cross(r_r, r_f_lateral) + f_I * vec2_t.cross(f_r, f_f_lateral);
     
@@ -107,8 +107,8 @@ class car_t {
     
     const gs = 5;
     
-    for (let i = -30; i < 30; i += gs) {
-      for (let j = -30; j < 30; j += gs) {
+    for (let i = -30; i <= 30; i += gs) {
+      for (let j = -30; j <= 30; j += gs) {
         const shift = new vec2_t(
           this.pos.x - Math.floor(this.pos.x / gs) * gs,
           this.pos.y - Math.floor(this.pos.y / gs) * gs
@@ -120,7 +120,7 @@ class car_t {
   
   bound()
   {
-    const b = 30;
+    const b = 50;
     if (this.pos.x < -b)
       this.pos.x = b;
     if (this.pos.x > b)
@@ -142,24 +142,46 @@ class car_t {
 function main()
 {
   const car = new car_t(new vec2_t(0, -10));
-  
+  let anchor;
   setInterval(function() {
+    if (input.get_mouse_button()) {
+      if (anchor) {
+        const MAX_W = Math.PI / 2;
+        let x = (anchor.x - input.mouse_pos().x) * 0.1;
+        if (x > MAX_W)
+          x = MAX_W;
+        if (x < -MAX_W)
+          x = -MAX_W;
+        car.steer(x);
+      } else {
+        anchor = input.mouse_pos();
+      }
+    } else {
+      anchor = null;
+    }
+    
+    draw.circle(new vec2_t(-10, -10), 4);
+    draw.line(
+      new vec2_t(-10, -10),
+      vec2_t.add(
+        new vec2_t(-10, -10),
+        vec2_t.rotate(new vec2_t(0, 4), car.wheel_dir)));
+    
     draw.clear();
     
     car.reset_forces();
+    car.drag();
     
     if (input.get_key("W"))
-      car.accel(30);
+      car.accel(20);
     if (input.get_key("A"))
-      car.steer(0.04);
+      car.steer(0.2);
     if (input.get_key("D"))
-      car.steer(-0.04);
+      car.steer(-0.2);
     
     car.wheel_reset();
     
     car.bound();
-    
-    car.drag();
     car.wheel_forces();
     car.integrate();
     
