@@ -56,8 +56,8 @@ class car_t {
     const C_lat = 2.0;
     const C_long = 0.01;
     
-    const r_grip = is_brake ? 0.2 : 0.4;
-    const f_grip = 0.4;
+    const r_grip = is_brake ? 0.15 : 0.3;
+    const f_grip = 0.3;
     
     const r_r = vec2_t.mulf(this.dir, -1);
     const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, this.ang_vel));
@@ -176,7 +176,17 @@ function main()
       origin,
       vec2_t.add(
         origin,
-        vec2_t.rotate(new vec2_t(0, 4), car.wheel_dir)));
+        vec2_t.rotate(new vec2_t(0, -4), car.wheel_dir)));
+    draw.line(
+      origin,
+      vec2_t.add(
+        origin,
+        vec2_t.rotate(new vec2_t(-4, 0), car.wheel_dir)));
+    draw.line(
+      origin,
+      vec2_t.add(
+        origin,
+        vec2_t.rotate(new vec2_t(4, 0), car.wheel_dir)));
     
     car.reset_forces();
     car.drag();
