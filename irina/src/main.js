@@ -1,6 +1,6 @@
 "use strict";
 
-import { vec2_t } from "./math.js";
+import { vec2_t, clamp } from "./math.js";
 import { draw_t } from "./draw.js";
 import { input_t } from "./input.js";
 
@@ -51,40 +51,48 @@ class car_t {
   
   wheel_forces()
   {
-const is_brake = input.get_key(" ");
+    const is_brake = input.get_key(" ");
     
-    const C_lat = 0.5;
+    const C_lat = 2.0;
     const C_long = 0.01;
-    const r_C_long = is_brake ? (C_long + 0.5) : C_long;
+    
+    const r_grip = is_brake ? 0.2 : 0.4;
+    const f_grip = 0.4;
     
     const r_r = vec2_t.mulf(this.dir, -1);
     const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, this.ang_vel));
+    const r_spd = vec2_t.length(r_vel);
     const r_normal = this.dir;
     const r_tangent = vec2_t.cross_up(r_normal, 1);
-    const r_alpha = vec2_t.dot(r_tangent, r_vel);
+    const r_slip_angle = vec2_t.dot(r_tangent, vec2_t.normalize(r_vel));
+    const r_alpha = clamp(r_slip_angle, -r_grip, r_grip) * r_spd;
+    if (Math.abs(r_slip_angle) > r_grip)
+      draw.circle(r_r, 0.5);
     const r_beta = vec2_t.dot(r_normal, r_vel);
     const r_f_lateral = vec2_t.mulf(r_tangent, -C_lat * r_alpha);
-    const r_f_longtitudinal = vec2_t.mulf(r_normal, -r_C_long * r_beta);
+    const r_f_longtitudinal = vec2_t.mulf(r_normal, -0.01 * r_beta);
     
     const f_r = this.dir;
     const f_vel = vec2_t.add(this.vel, vec2_t.cross_up(f_r, this.ang_vel));
+    const f_spd = vec2_t.length(f_vel);
     const f_normal = vec2_t.rotate(this.dir, this.wheel_dir);
     const f_tangent = vec2_t.cross_up(f_normal, 1);
-    const f_alpha = vec2_t.dot(f_tangent, f_vel);
+    const f_slip_angle = vec2_t.dot(f_tangent, vec2_t.normalize(f_vel));
+    const f_alpha = clamp(f_slip_angle, -f_grip, f_grip) * f_spd;
     const f_beta = vec2_t.dot(f_normal, f_vel);
     const f_f_lateral = vec2_t.mulf(f_tangent, -C_lat * f_alpha);
     const f_f_longtitudinal = vec2_t.mulf(f_normal, -C_long * f_beta);
     
-    const f_cornering = vec2_t.add(r_f_lateral, f_f_lateral);
-    const f_friction = vec2_t.add(r_f_longtitudinal, f_f_longtitudinal);
-    const f_net = vec2_t.add(f_cornering, f_friction);
+    const r_f_net = vec2_t.add(r_f_lateral, r_f_longtitudinal);
+    const f_f_net = vec2_t.add(f_f_lateral, f_f_longtitudinal);
     
-    const a = vec2_t.dot(vec2_t.add(this.force, f_net), this.dir) * 0.0001 + (is_brake ? 0.5 : 0);
-    const I = 1.0;
-    const r_I = I - a;
-    const f_I = I + a;
+    const f_net = vec2_t.add(r_f_net, f_f_net);
     
-    const ang_accel = r_I * vec2_t.cross(r_r, r_f_lateral) + f_I * vec2_t.cross(f_r, f_f_lateral);
+    const I = 0.5;
+    const r_I = I;
+    const f_I = I;
+    
+    const ang_accel = r_I * vec2_t.cross(r_r, r_f_net) + f_I * vec2_t.cross(f_r, f_f_net);
     
     this.ang_vel += ang_accel * TIMESTEP;
     this.force = vec2_t.add(this.force, f_net);
@@ -147,7 +155,7 @@ function main()
     if (input.get_mouse_button()) {
       if (anchor) {
         const MAX_W = Math.PI / 2;
-        let x = (anchor.x - input.mouse_pos().x) * 0.1;
+        let x = (anchor.x - input.mouse_pos().x) * 0.2;
         if (x > MAX_W)
           x = MAX_W;
         if (x < -MAX_W)
@@ -160,24 +168,36 @@ function main()
       anchor = null;
     }
     
-    draw.circle(new vec2_t(-10, -10), 4);
-    draw.line(
-      new vec2_t(-10, -10),
-      vec2_t.add(
-        new vec2_t(-10, -10),
-        vec2_t.rotate(new vec2_t(0, 4), car.wheel_dir)));
-    
     draw.clear();
+    
+    const origin = new vec2_t(-10, -10);
+    draw.circle(origin, 4);
+    draw.line(
+      origin,
+      vec2_t.add(
+        origin,
+        vec2_t.rotate(new vec2_t(0, 4), car.wheel_dir)));
     
     car.reset_forces();
     car.drag();
     
+    /*
+    if (input.get_key("Q"))
+      car.accel(10);
     if (input.get_key("W"))
       car.accel(20);
+    if (input.get_key("E"))
+      car.accel(30);
+    if (input.get_key("R"))
+      car.accel(40);
+    */
+    
+    if (input.get_key("W"))
+      car.accel(40);
     if (input.get_key("A"))
-      car.steer(0.2);
+      car.steer(+0.4);
     if (input.get_key("D"))
-      car.steer(-0.2);
+      car.steer(-0.4);
     
     car.wheel_reset();
     

@@ -79,6 +79,11 @@ export class plane_t {
   }
 };
 
+export function clamp(a, b, c)
+{
+  return Math.min(Math.max(a, b), c);
+}
+
 export function to_rad(deg)
 {
   return deg * Math.PI / 180.0;
