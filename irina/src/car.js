@@ -65,7 +65,7 @@ export class car_t {
     const C_lat = 0.7;
     const C_long = 0.01;
     
-    const f_grip = this.grip_loss ? 0.45 : 0.5;
+    const f_grip = this.grip_loss ? 0.65 : 0.5;
     const r_grip = this.is_brake ? f_grip / 2.0 : f_grip;
     
     const r_r = vec2_t.mulf(this.dir, -1);
@@ -95,7 +95,7 @@ export class car_t {
     
     const f_net = vec2_t.add(r_f_net, f_f_net);
     
-    const I = 0.7;
+    const I = this.grip_loss ? 0.4 : 0.7;
     const r_I = I;
     const f_I = I;
     

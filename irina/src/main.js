@@ -1,6 +1,6 @@
 "use strict";
 
-import { rand, vec2_t, clamp } from "./math.js";
+import { vec2_t, to_rad } from "./math.js";
 import { draw_t } from "./draw.js";
 import { input_t } from "./input.js";
 import { map_t } from "./map.js";
@@ -17,7 +17,9 @@ function main()
   const map = new map_t();
   const car = new car_t();
   
-  camera.z_height = 4.0;
+  camera.set_fov(to_rad(60));
+  
+  camera.z_height = 7.0;
   camera.pos = new vec2_t(0, -5);
   
   let t = 0;
@@ -27,7 +29,7 @@ function main()
     car.drag();
     
     if (input.get_key("W"))
-      car.accel(40);
+      car.accel(50);
     if (input.get_key("S"))
       car.accel(-10);
     if (input.get_key("A"))

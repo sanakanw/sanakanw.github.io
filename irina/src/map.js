@@ -10,7 +10,7 @@ export class map_t {
     
     this.turns.push(new vec2_t());
     
-    const theta = 100;
+    const theta = 120;
     let dir = new vec2_t(0, 60);
     for (let i = 0; i < 50; i++) {
       this.turns.push(vec2_t.add(this.turns[i], dir));
@@ -20,7 +20,7 @@ export class map_t {
   
   draw3d(draw3d, camera)
   {
-    const ROAD_WIDTH = 10;
+    const ROAD_WIDTH = 15;
     
     const side_begin = vec2_t.cross_up(vec2_t.normalize(vec2_t.sub(this.turns[1], this.turns[0])), ROAD_WIDTH);
     
