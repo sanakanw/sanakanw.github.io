@@ -3,10 +3,16 @@
 import { vec2_t } from "./math.js";
 
 export class draw_t {
+  canvas;
+  ctx;
+  half_width;
+  half_height;
+  
   constructor(canvas)
   {
-    this.inverse_fov = 20;
     this.canvas = canvas;
+    this.half_width = this.canvas.width / 2.0;
+    this.half_height = this.canvas.height / 2.0;
     this.ctx = canvas.getContext("2d");
   }
   
@@ -22,7 +28,7 @@ export class draw_t {
   
   screen_space(v)
   {
-    return new vec2_t(v.x * this.inverse_fov + this.canvas.width / 2, -v.y * this.inverse_fov + this.canvas.height / 2);
+    return new vec2_t((v.x + 1) * this.half_width, (-v.y + 1) * this.half_height);
   }
   
   line(a, b)
@@ -39,9 +45,12 @@ export class draw_t {
   
   circle(pos, radius)
   {
+    if (radius < 0)
+      return;
+    
     const screen_pos = this.screen_space(pos);
     this.ctx.beginPath();
-    this.ctx.arc(screen_pos.x, screen_pos.y, radius * this.inverse_fov, 0, 2 * Math.PI);
+    this.ctx.arc(screen_pos.x, screen_pos.y, radius * this.half_width, 0, 2 * Math.PI);
     this.ctx.stroke();
   }
 };

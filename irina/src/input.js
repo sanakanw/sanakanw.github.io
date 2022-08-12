@@ -13,7 +13,7 @@ export class input_t {
   constructor(canvas)
   {
     this.keys = {};
-    this.inverse_fov = 20;
+    this.inverse_fov = 10;
     this.canvas = canvas;
     this.mouse_down = false;
     document.addEventListener("keydown", (e) => {
