@@ -11,8 +11,8 @@ export class map_t {
     this.turns.push(new vec2_t());
     
     const theta = 120;
-    let dir = new vec2_t(0, 60);
-    for (let i = 0; i < 50; i++) {
+    let dir = new vec2_t(0, 30);
+    for (let i = 0; i < 100; i++) {
       this.turns.push(vec2_t.add(this.turns[i], dir));
       dir = vec2_t.rotate(dir, rand() * theta * Math.PI / 180.0);
     }

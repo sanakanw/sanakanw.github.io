@@ -65,8 +65,8 @@ export class car_t {
     const C_lat = 0.7;
     const C_long = 0.01;
     
-    const f_grip = this.grip_loss ? 0.65 : 0.5;
-    const r_grip = this.is_brake ? f_grip / 2.0 : f_grip;
+    const f_grip = 0.65;
+    const r_grip = this.is_brake ? 0.65 / 2.0 : 0.65;
     
     const r_r = vec2_t.mulf(this.dir, -1);
     const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, this.ang_vel));
@@ -95,7 +95,7 @@ export class car_t {
     
     const f_net = vec2_t.add(r_f_net, f_f_net);
     
-    const I = this.grip_loss ? 0.4 : 0.7;
+    const I = 0.55;
     const r_I = I;
     const f_I = I;
     
@@ -104,7 +104,7 @@ export class car_t {
     this.ang_vel += ang_accel * TIMESTEP;
     this.force = vec2_t.add(this.force, f_net);
     
-    this.grip_loss = Math.abs(r_slip_angle) >= r_grip;
+    this.grip_loss = r_slip_angle;
   }
   
   draw3d(draw3d)
@@ -132,8 +132,8 @@ export class car_t {
       draw3d.circle(side_p2, 0.1);
     }
     
-    if (this.grip_loss)
-      draw3d.circle(p1, 0.1);
+    if (Math.abs(this.grip_loss) > 0.4)
+      draw3d.circle(p1, Math.abs(this.grip_loss));
   }
   
   integrate()
