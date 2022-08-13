@@ -3,6 +3,32 @@
   padding: 0;
 }
 
+#lap_time {
+  top: 10px;
+  left: 10px;
+  text-align: left;
+}
+
+#run_time {
+  top: 10px;
+  right: 20px;
+  text-align: right;
+}
+
+#time {
+  top: 10px;
+  text-align: center;
+  font-size: 50px;
+}
+
+.label {
+  position: absolute;
+  width: 100%;
+  z-index: 100;
+  display: block;
+  color: white;
+}
+
 body {
   overflow: hidden;
   background-color: black;

@@ -12,14 +12,49 @@ const loader = new GLTFLoader();
 const car = new car_t();
 const map = new map_t();
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.append(renderer.domElement);
+class rat_t {
+  constructor(pos)
+  {
+    this.pos = pos;
+    this.init_mesh();
+  }
+  
+  init_mesh()
+  {
+    loader.load("assets/rat.glb", (gltf) => {
+      this.mesh = gltf.scene;
+      this.mesh.position.copy(this.pos);
+      this.mesh.scale.set(3, -3, 3);
+      scene.add(this.mesh);
+    }, undefined, function (error) {
+      console.error(error);
+    });
+  }
+  
+  update_mesh()
+  {
+    
+  }
+};
 
-car.init_mesh(scene, loader);
-map.load_map("assets/dr_track_1", scene, loader);
+const rats = [
+  new rat_t(new THREE.Vector3(60, 10, 5)),
+  new rat_t(new THREE.Vector3(65, 10, 60)),
+  new rat_t(new THREE.Vector3(-30, 10, 5))
+];
 
-const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
-scene.add( ambientLight );
+function init()
+{
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.append(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  
+  car.init_mesh(scene, loader);
+  map.load_map("assets/dr_track_1", scene, loader);
+  init_bgm();
+}
 
 function update()
 {
@@ -28,8 +63,6 @@ function update()
   
   if (input.get_key("W"))
     car.accel(50);
-  if (input.get_key("J"))
-    car.accel(80);
   if (input.get_key("S"))
     car.accel(-10);
   if (input.get_key("A"))
@@ -43,6 +76,7 @@ function update()
   car.update_mesh();
   car.clip_map(map);
   car.integrate();
+  car.track();
   
   const vel_dir_bias = car.vel.clone().normalize().add(car.dir).normalize();
   const cam_pos = car.pos.clone().add(vel_dir_bias.multiplyScalar(-7)).add(new THREE.Vector3(0, 7, 0));
@@ -51,7 +85,29 @@ function update()
   camera.position.copy(cam_pos);
   camera.lookAt(look_pos);
   
+  // horizontally spinning rat
+  for (const rat of rats) {
+    rat.mesh.rotateY(0.05);
+  }
+  
   renderer.render(scene, camera);
 }
 
+function init_bgm()
+{
+  const listener = new THREE.AudioListener();
+  camera.add(listener);
+
+  const sound = new THREE.Audio(listener);
+
+  const audio_loader = new THREE.AudioLoader();
+  audio_loader.load("assets/bgm.mp3", function(buffer) {
+    sound.setBuffer(buffer);
+    sound.setLoop(true);
+    sound.setVolume(0.25);
+    sound.play();
+  });
+}
+
+init();
 setInterval(update, 15);

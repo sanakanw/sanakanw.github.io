@@ -29,6 +29,13 @@ export class car_t {
     this.grip_loss = false;
     this.mesh = null;
     this.clip_seg_id = -1;
+    this.headlight = null;
+    this.time_label = document.getElementById("time");
+    this.lap_label = document.getElementById("lap_time");
+    this.run_label = document.getElementById("run_time");
+    this.lap_time = new Date();
+    this.laps = [];
+    this.checkpoints = [];
   }
   
   reset_forces()
@@ -36,6 +43,38 @@ export class car_t {
     this.force.x = 0;
     this.force.y = 0;
     this.force.z = 0;
+  }
+  
+  track()
+  {
+    const elapsed_time = new Date() - this.lap_time;
+    this.time_label.innerHTML = format_time(elapsed_time);
+    
+    if (this.clip_seg_id % 50 == 0) {
+      if (!this.checkpoints.includes(this.clip_seg_id)) {
+        this.checkpoints.push(this.clip_seg_id);
+      }
+    }
+    
+    if (this.checkpoints.length >= Math.floor(276 / 50) && this.clip_seg_id == 276) {
+      this.checkpoints = [];
+      if (this.laps.length > 0)
+        this.laps.push(elapsed_time - this.laps[this.laps.length - 1]);
+      else
+        this.laps.push(elapsed_time);
+      
+      this.lap_label.innerHTML = "LAP " + (this.laps.length + 1) + "/3" + "<br>";
+      for (const lap of this.laps)
+        this.lap_label.innerHTML += format_time(lap) + "<br>";
+      
+      if (this.laps.length == 3) {
+        const run_time = this.laps[0] + this.laps[1] + this.laps[2];
+        this.laps = [];
+        this.lap_label.innerHTML = "LAP 1/3" + "<br>";
+        this.run_label.innerHTML += format_time(run_time) + "<br>";
+        this.lap_time = new Date();
+      }
+    }
   }
   
   accel(amount)
@@ -72,7 +111,7 @@ export class car_t {
     const C_long = 0.01;
     
     const f_grip = 0.65;
-    const r_grip = this.is_brake ? 0.65 / 2.0 : 0.65;
+    const r_grip = this.is_brake ? 0.65 * 2.0 / 3.0 : 0.65;
     
     const r_r = this.dir.clone().multiplyScalar(-1);
     const r_vel = this.vel.clone().add(r_r.clone().cross(new THREE.Vector3(0, -this.ang_vel, 0)));
@@ -174,7 +213,9 @@ export class car_t {
   
   init_mesh(scene, loader)
   {
-    loader.load("assets/ae86/scene.glb", (gltf) => {
+    this.headlight = new THREE.SpotLight(0xffff99, 60.0, 50.0);
+    scene.add(this.headlight, this.headlight.target);
+    loader.load("assets/ae86/untitled.glb", (gltf) => {
       this.mesh = gltf.scene;
       scene.add(this.mesh);
     }, undefined, function (error) {
@@ -184,6 +225,12 @@ export class car_t {
   
   update_mesh()
   {
+    if (this.headlight) {
+      this.headlight.position.copy(this.pos.clone().add(this.dir));
+      this.headlight.target.position.copy(this.pos.clone().add(this.dir.clone().multiplyScalar(2)));
+      this.headlight.target.updateMatrix();
+    }
+    
     if (this.mesh) {
       const axis = new THREE.Vector3(0, 0, 1);
       
@@ -196,4 +243,13 @@ export class car_t {
 function clamp(a, b, c)
 {
   return Math.min(Math.max(a, b), c);
+}
+
+function format_time(elapsed_time)
+{
+  const minutes = Math.floor(elapsed_time / 60000) % 10;
+  const seconds = Math.floor(elapsed_time / 1000) % 60;
+  const miliseconds = Math.floor(elapsed_time / 10) % 100;
+  
+  return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0") + ":" + miliseconds.toString().padStart(2, "0");
 }
