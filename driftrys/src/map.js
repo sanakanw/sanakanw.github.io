@@ -1,61 +1,102 @@
 "use strict";
 
 import * as THREE from "three";
+import { Plane } from "./dr_math.js";
+
+function read_file(url, on_load)
+{
+  const req = new XMLHttpRequest();
+  req.addEventListener("load", function() {
+    on_load(this.responseText);
+  });
+  req.open("GET", url);
+  req.send();
+}
+
+function make_plane(a, b)
+{
+  const d_pos = vec2_t.normalize(vec2_t.sub(a, b));
+  const normal = vec2_t.cross_up(d_pos, -1);
+  const dist = vec2_t.dot(normal, a);
+  return new plane_t(normal, dist);
+}
+
+class segment_t {
+  constructor(side_a, side_b, back) {
+    this.side_a = side_a;
+    this.side_b = side_b;
+    this.back = back;
+  }
+};
+
+function parse_plane(obj_plane)
+{
+  const normal = new THREE.Vector3(obj_plane.normal.x, 0, obj_plane.normal.y);
+  const distance = obj_plane.distance;
+  
+  return new Plane(normal, distance);
+}
+
+function parse_segment(obj_segment)
+{
+  const side_a = parse_plane(obj_segment.side_a);
+  const side_b = parse_plane(obj_segment.side_b);
+  const back = parse_plane(obj_segment.back);
+  
+  return new segment_t(side_a, side_b, back);
+}
 
 export class map_t {
-  constructor(car)
+  mesh;
+  segments;
+  
+  constructor()
   {
-    this.car = car;
-    this.turns = [];
-    
-    this.turns.push(new THREE.Vector3(0, 0, 0));
-    
-    const max_theta = 110;
-    let turn_dir = new THREE.Vector3(0, 0, 30);
-    for (let i = 0; i < 100; i++) {
-      this.turns.push(this.turns[i].clone().add(turn_dir));
-      const turn_rotation = new THREE.Euler(0, (Math.random() - 0.5) * max_theta * Math.PI / 180.0, 0);
-      turn_dir.applyEuler(turn_rotation);
-    }
+    this.mesh = null;
+    this.segments = null;
   }
   
-  init_mesh(scene)
+  load_map(map_path, scene, loader)
   {
-    const ROAD_WIDTH = 15;
+    this.init_track(map_path + "/scene.track");
+    this.init_mesh(map_path + "/scene.glb", scene, loader);
+  }
+  
+  init_track(track_path)
+  {
+    this.segments = [];
     
-    const points = [];
+    read_file(track_path, (body) => {
+      const track = JSON.parse(body);
+      
+      for (const segment of track.segments)
+        this.segments.push(parse_segment(segment));
+    });
+  }
+  
+  init_mesh(mdl_path, scene, loader)
+  {
+    loader.load("assets/dr_track_1/scene.glb", (gltf) => {
+      this.mesh = gltf.scene;
+      scene.add(this.mesh);
+    }, undefined, function (error) {
+      console.error(error);
+    });
+  }
+  
+  check_point(segment_id, pos)
+  {
+    const segment = this.segments[segment_id];
     
-    const side_begin = new THREE.Vector3(0, ROAD_WIDTH, 0).cross(new THREE.Vector3().subVectors(this.turns[1], this.turns[0]).normalize());
+    const front_seg_id = (segment_id + 1) % this.segments.length;
+    const front_plane = this.segments[front_seg_id].back.clone().flip();
     
-    let old_left = this.turns[0].clone().add(side_begin);
-    let old_right = this.turns[0].clone().sub(side_begin);
+    const clip_side_a = segment.side_a.projectVector3(pos);
+    const clip_side_b = segment.side_b.projectVector3(pos);
+    const clip_back = segment.back.projectVector3(pos);
+    const clip_front = front_plane.projectVector3(pos);
     
-    for (let i = 1; i < this.turns.length; i++) {
-      const a = this.turns[i - 1];
-      const b = this.turns[i];
-      
-      const side = new THREE.Vector3(0, ROAD_WIDTH, 0).cross(new THREE.Vector3().subVectors(b, a).normalize());
-      
-      const a_left = old_left;
-      const a_right = old_right;
-      
-      const b_left = b.clone().add(side);
-      const b_right = b.clone().sub(side);
-      
-      points.push(b_left);
-      points.push(a_left);
-      points.push(a_right);
-      points.push(b_right);
-      points.push(b_left);
-      
-      old_left = b_left;
-      old_right = b_right;
-    }
-    
-    const material = new THREE.LineBasicMaterial( { color: 0xff0ff } );
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const line = new THREE.Line(geometry, material);
-    scene.add(line);
+    return clip_side_a > 0 && clip_side_b > 0 && clip_back > 0 && clip_front > 0;
   }
 }
 

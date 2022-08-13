@@ -1,6 +1,7 @@
 "use strict";
 
 import * as THREE from "three";
+import { Plane } from "./dr_math.js";
 
 const TIMESTEP = 0.015;
 
@@ -14,6 +15,7 @@ export class car_t {
   is_brake;
   grip_loss;
   mesh;
+  clip_seg_id;
   
   constructor()
   {
@@ -26,6 +28,7 @@ export class car_t {
     this.is_brake = false;
     this.grip_loss = false;
     this.mesh = null;
+    this.clip_seg_id = -1;
   }
   
   reset_forces()
@@ -107,7 +110,7 @@ export class car_t {
     this.ang_vel += ang_accel * TIMESTEP;
     this.force.add(f_net);
     
-    this.grip_loss = r_slip_angle;
+    this.grip_loss = r_slip_angle > 0.2;
   }
   
   integrate()
@@ -115,6 +118,58 @@ export class car_t {
     this.dir.applyEuler(new THREE.Euler(0, this.ang_vel * TIMESTEP, 0));
     this.vel.add(this.force.clone().multiplyScalar(TIMESTEP));
     this.pos.add(this.vel.clone().multiplyScalar(TIMESTEP));
+  }
+  
+  clip_map(map)
+  {
+    if (this.clip_seg_id == -1) {
+      for (let i = 0; i < map.segments.length - 1; i++) {
+        if (map.check_point(i, this.pos))
+          this.clip_seg_id = i;
+      }
+    } else {
+      const segs_behind = this.clip_seg_id;
+      const segs_ahead = map.segments.length - this.clip_seg_id;
+      
+      const max_segs = Math.max(segs_behind, segs_ahead);
+      
+      const segment_id = this.clip_seg_id
+      
+      this.clip_seg_id = -1;
+      for (let i = 0; i < max_segs; i++) {
+        const behind_id = segment_id - i < 0 ? map.segments.length - i : segment_id - i;
+        const ahead_id = (segment_id + i) % map.segments.length;
+        
+        if (map.check_point(behind_id, this.pos)) {
+          this.clip_seg_id = behind_id;
+          break;
+        }
+        
+        if (map.check_point(ahead_id, this.pos)) {
+          this.clip_seg_id = ahead_id;
+          break;
+        }
+      }
+    }
+    
+    if (this.clip_seg_id != -1) {
+      const segment = map.segments[this.clip_seg_id];
+      
+      const new_pos = this.pos.clone().add(this.vel.clone().multiplyScalar(TIMESTEP));
+      
+      const clip_side_a = segment.side_a.projectVector3(new_pos) - 0.5;
+      const clip_side_b = segment.side_b.projectVector3(new_pos) - 0.5;
+      
+      if (clip_side_a < 0) {
+        const fix = -(this.vel.dot(segment.side_a.normal) + 0.2 * clip_side_a / TIMESTEP);
+        this.vel.add(segment.side_a.normal.clone().multiplyScalar(fix));
+      }
+      
+      if (clip_side_b < 0) {
+        const fix = -(this.vel.dot(segment.side_b.normal) + 0.2 * clip_side_b / TIMESTEP);
+        this.vel.add(segment.side_b.normal.clone().multiplyScalar(fix));
+      }
+    }
   }
   
   init_mesh(scene, loader)
