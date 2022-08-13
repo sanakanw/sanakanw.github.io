@@ -38,6 +38,22 @@ export class car_t {
     this.checkpoints = [];
   }
   
+  reset()
+  {
+    this.pos = new THREE.Vector3();
+    this.wheel_dir = 0.0;
+    this.dir = new THREE.Vector3(0, 0, 1);
+    this.vel = new THREE.Vector3();
+    this.force = new THREE.Vector3();
+    this.ang_vel = 0.0;
+    this.is_brake = false;
+    this.grip_loss = false;
+    this.clip_seg_id = -1;
+    this.lap_time = new Date();
+    this.laps = [];
+    this.checkpoints = [];
+  }
+  
   reset_forces()
   {
     this.force.x = 0;

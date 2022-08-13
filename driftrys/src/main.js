@@ -63,6 +63,17 @@ function update()
   
   if (input.get_key("W"))
     car.accel(50);
+  
+  if (input.get_key("J"))
+    car.accel(50);
+  if (input.get_key("K"))
+    car.accel(50);
+  if (input.get_key("L"))
+    car.accel(50);
+  
+  if (input.get_key("R"))
+    car.reset();
+  
   if (input.get_key("S"))
     car.accel(-10);
   if (input.get_key("A"))
