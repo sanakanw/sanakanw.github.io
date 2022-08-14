@@ -74,20 +74,19 @@ export class car_t {
     
     if (this.checkpoints.length >= Math.floor(276 / 50) && this.clip_seg_id == 276) {
       this.checkpoints = [];
-      if (this.laps.length > 0)
-        this.laps.push(elapsed_time - this.laps[this.laps.length - 1]);
-      else
-        this.laps.push(elapsed_time);
+      this.laps.push(elapsed_time);
       
       this.lap_label.innerHTML = "LAP " + (this.laps.length + 1) + "/3" + "<br>";
-      for (const lap of this.laps)
-        this.lap_label.innerHTML += format_time(lap) + "<br>";
+      let prev_lap = 0;
+      for (const lap of this.laps) {
+        this.lap_label.innerHTML += format_time(lap - prev_lap) + "<br>";
+        prev_lap = lap;
+      }
       
       if (this.laps.length == 3) {
-        const run_time = this.laps[0] + this.laps[1] + this.laps[2];
         this.laps = [];
         this.lap_label.innerHTML = "LAP 1/3" + "<br>";
-        this.run_label.innerHTML += format_time(run_time) + "<br>";
+        this.run_label.innerHTML += format_time(elapsed_time) + "<br>";
         this.lap_time = new Date();
       }
     }
