@@ -13,7 +13,7 @@ export class car_t {
   force;
   ang_vel;
   is_brake;
-  grip_loss;
+  slip_angle;
   mesh;
   clip_seg_id;
   
@@ -26,16 +26,25 @@ export class car_t {
     this.force = new THREE.Vector3();
     this.ang_vel = 0.0;
     this.is_brake = false;
-    this.grip_loss = false;
+    this.slip_angle = 0;
     this.mesh = null;
+    
     this.clip_seg_id = -1;
-    this.headlight = null;
-    this.time_label = document.getElementById("time");
-    this.lap_label = document.getElementById("lap_time");
-    this.run_label = document.getElementById("run_time");
-    this.lap_time = new Date();
+    this.prev_seg_id = -1;
+    this.lap_sum = 0;
     this.laps = [];
-    this.checkpoints = [];
+    this.start_time = new Date();
+    
+    this.time_label = document.getElementById("time");
+    this.run_time_label = document.getElementById("run_time");
+    this.lap_time_label = document.getElementById("lap_time");
+    
+    this.headlight = null;
+    this.slip_particle = null;
+    
+    this.snd_tire = null;
+    this.snd_tire_count = 0;
+    this.snd_tire_tick = 0;
   }
   
   reset()
@@ -47,11 +56,65 @@ export class car_t {
     this.force = new THREE.Vector3();
     this.ang_vel = 0.0;
     this.is_brake = false;
-    this.grip_loss = false;
+    this.slip_angle = 0;
+    
     this.clip_seg_id = -1;
-    this.lap_time = new Date();
+    this.prev_seg_id = -1;
+    this.lap_sum = 0;
     this.laps = [];
-    this.checkpoints = [];
+    this.start_time = new Date();
+    
+    this.snd_tire.setVolume(0);
+  }
+  
+  update(map)
+  {
+    this.wheel_reset();
+    this.wheel_forces();
+    this.clip_map(map);
+    this.integrate();
+    this.track(map);
+    
+    this.update_snd();
+    this.update_particle();
+    this.update_mesh();
+  }
+  
+  track(map)
+  {
+    const elapsed_time = new Date() - this.start_time;
+    this.time_label.innerHTML = format_time(elapsed_time);
+    
+    if (this.clip_seg_id != this.prev_seg_id) {
+      let d_seg = this.clip_seg_id - this.prev_seg_id;
+      if (d_seg > map.segments.length / 2)
+        d_seg = -this.prev_seg_id - 1;
+      else if (d_seg < -map.segments.length / 2)
+        d_seg = map.segments.length - 1 + d_seg;
+      this.lap_sum += d_seg;
+      
+      if (this.lap_sum == map.segments.length) {
+        this.laps.push(elapsed_time);
+        
+        if (this.laps.length == 3) {
+          this.lap_time_label.innerHTML += format_time(this.laps[2] - this.laps[1]);
+          this.run_time_label.innerHTML += format_time(elapsed_time) + "<br>";
+          this.start_time = new Date();
+          this.laps = [];
+        } else {
+          this.lap_time_label.innerHTML = "LAP " + (this.laps.length + 1) + "/3<br>";
+          let prev_lap = 0;
+          for (const lap of this.laps) {
+            this.lap_time_label.innerHTML += format_time(lap - prev_lap) + "<br>";
+            prev_lap = lap;
+          }
+        }
+        
+        this.lap_sum -= map.segments.length;
+      }
+      
+      this.prev_seg_id = this.clip_seg_id;
+    }
   }
   
   reset_forces()
@@ -59,37 +122,6 @@ export class car_t {
     this.force.x = 0;
     this.force.y = 0;
     this.force.z = 0;
-  }
-  
-  track()
-  {
-    const elapsed_time = new Date() - this.lap_time;
-    this.time_label.innerHTML = format_time(elapsed_time);
-    
-    if (this.clip_seg_id % 50 == 0) {
-      if (!this.checkpoints.includes(this.clip_seg_id)) {
-        this.checkpoints.push(this.clip_seg_id);
-      }
-    }
-    
-    if (this.checkpoints.length >= Math.floor(276 / 50) && this.clip_seg_id == 276) {
-      this.checkpoints = [];
-      this.laps.push(elapsed_time);
-      
-      this.lap_label.innerHTML = "LAP " + (this.laps.length + 1) + "/3" + "<br>";
-      let prev_lap = 0;
-      for (const lap of this.laps) {
-        this.lap_label.innerHTML += format_time(lap - prev_lap) + "<br>";
-        prev_lap = lap;
-      }
-      
-      if (this.laps.length == 3) {
-        this.laps = [];
-        this.lap_label.innerHTML = "LAP 1/3" + "<br>";
-        this.run_label.innerHTML += format_time(elapsed_time) + "<br>";
-        this.lap_time = new Date();
-      }
-    }
   }
   
   accel(amount)
@@ -164,7 +196,7 @@ export class car_t {
     this.ang_vel += ang_accel * TIMESTEP;
     this.force.add(f_net);
     
-    this.grip_loss = r_slip_angle > 0.2;
+    this.slip_angle = Math.abs(r_slip_angle);
   }
   
   integrate()
@@ -241,8 +273,10 @@ export class car_t {
   update_mesh()
   {
     if (this.headlight) {
-      this.headlight.position.copy(this.pos.clone().add(this.dir));
-      this.headlight.target.position.copy(this.pos.clone().add(this.dir.clone().multiplyScalar(2)));
+      const car_dir = this.dir.clone().multiplyScalar(2);
+      const car_front = this.pos.clone().add(car_dir).setY(1.0);
+      this.headlight.position.copy(car_front);
+      this.headlight.target.position.copy(car_front.clone().add(car_dir));
       this.headlight.target.updateMatrix();
     }
     
@@ -252,6 +286,55 @@ export class car_t {
       this.mesh.position.copy(this.pos);
       this.mesh.quaternion.setFromUnitVectors(axis, this.dir);
     }
+  }
+  
+  init_snd(listener)
+  {
+    const audio_loader = new THREE.AudioLoader();
+    audio_loader.load("assets/tire.ogg", (buffer) => {
+      this.snd_tire = new THREE.Audio(listener);
+      this.snd_tire.setBuffer(buffer);
+    });
+  }
+  
+  update_snd()
+  {
+    if (this.slip_angle > 0.4 && this.vel.length() > 10) {
+      if (!this.snd_tire.isPlaying) {
+        this.snd_tire.play();
+        this.snd_tire.gain.gain.exponentialRampToValueAtTime(0.001, 0.05);
+      }
+      
+      const lerp = (this.slip_angle - 0.4) / 0.6;
+      this.snd_tire.setVolume(lerp * 0.5);
+    }
+  }
+  
+  init_particle(scene)
+  {
+    const shape = new THREE.Shape();
+    
+    shape.moveTo(0, 0);
+    shape.lineTo(1, 0);
+    shape.lineTo(1, 1);
+    shape.lineTo(0, 1);
+    shape.lineTo(0, 0);
+    
+    const geometry = new THREE.ShapeGeometry(shape);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    
+    this.slip_particle = [];
+    
+    for (let i = 0; i < 4; i++) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.visible = false;
+      scene.add(mesh);
+      this.slip_particle.push(mesh);
+    }
+  }
+  
+  update_particle(scene)
+  {
   }
 };
 

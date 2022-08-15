@@ -58,8 +58,18 @@ export class map_t {
   
   load_map(map_path, scene, loader)
   {
-    this.init_track(map_path + "/scene.track");
-    this.init_mesh(map_path + "/scene.glb", scene, loader);
+    if (this.mesh) {
+      this.mesh.parent.remove(this.mesh);
+      for (const child of this.mesh.children) {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          child.material.dispose();
+        }
+      }
+    }
+    
+    this.init_track("assets/" + map_path + "/scene.track");
+    this.init_mesh("assets/" + map_path + "/scene.glb", scene, loader);
   }
   
   init_track(track_path)
@@ -76,7 +86,7 @@ export class map_t {
   
   init_mesh(mdl_path, scene, loader)
   {
-    loader.load("assets/dr_track_1/scene.glb", (gltf) => {
+    loader.load(mdl_path, (gltf) => {
       this.mesh = gltf.scene;
       scene.add(this.mesh);
     }, undefined, function (error) {

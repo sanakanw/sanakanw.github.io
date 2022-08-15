@@ -11,40 +11,12 @@ const input = new input_t(renderer.domElement);
 const loader = new GLTFLoader();
 const car = new car_t();
 const map = new map_t();
-
-class rat_t {
-  constructor(pos)
-  {
-    this.pos = pos;
-    this.init_mesh();
-  }
-  
-  init_mesh()
-  {
-    loader.load("assets/rat.glb", (gltf) => {
-      this.mesh = gltf.scene;
-      this.mesh.position.copy(this.pos);
-      this.mesh.scale.set(3, -3, 3);
-      scene.add(this.mesh);
-    }, undefined, function (error) {
-      console.error(error);
-    });
-  }
-  
-  update_mesh()
-  {
-    
-  }
-};
-
-const rats = [
-  new rat_t(new THREE.Vector3(60, 10, 5)),
-  new rat_t(new THREE.Vector3(65, 10, 60)),
-  new rat_t(new THREE.Vector3(-30, 10, 5))
-];
+const listener = new THREE.AudioListener();
 
 function init()
 {
+  camera.add(listener);
+  
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.append(renderer.domElement);
 
@@ -52,8 +24,10 @@ function init()
   scene.add(ambientLight);
   
   car.init_mesh(scene, loader);
-  map.load_map("assets/dr_track_1", scene, loader);
-  init_bgm();
+  car.init_snd(listener);
+  car.init_particle(scene);
+  map.load_map("dr_track_1", scene, loader);
+  // init_bgm();
 }
 
 function update()
@@ -82,12 +56,16 @@ function update()
     car.steer(-0.4);
   car.brake(input.get_key(" "));
   
-  car.wheel_reset();
-  car.wheel_forces();
-  car.update_mesh();
-  car.clip_map(map);
-  car.integrate();
-  car.track();
+  if (input.get_key("1")) {
+    map.load_map("dr_track_1", scene, loader);
+    car.reset();
+  }
+  if (input.get_key("2")) {
+    map.load_map("dr_track_2", scene, loader);
+    car.reset();
+  }
+  
+  car.update(map);
   
   const vel_dir_bias = car.vel.clone().normalize().add(car.dir).normalize();
   const cam_pos = car.pos.clone().add(vel_dir_bias.multiplyScalar(-7)).add(new THREE.Vector3(0, 7, 0));
@@ -96,19 +74,11 @@ function update()
   camera.position.copy(cam_pos);
   camera.lookAt(look_pos);
   
-  // horizontally spinning rat
-  for (const rat of rats) {
-    rat.mesh.rotateY(0.05);
-  }
-  
   renderer.render(scene, camera);
 }
 
 function init_bgm()
 {
-  const listener = new THREE.AudioListener();
-  camera.add(listener);
-
   const sound = new THREE.Audio(listener);
 
   const audio_loader = new THREE.AudioLoader();
