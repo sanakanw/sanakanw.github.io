@@ -64,14 +64,14 @@ function update()
     car.steer(-0.4);
   car.brake(input.get_key(" "));
   
-  car.update(map);
-  
   const vel_dir_bias = car.vel.clone().normalize().add(car.dir).normalize();
   const cam_pos = car.pos.clone().add(vel_dir_bias.multiplyScalar(-7)).add(new THREE.Vector3(0, 7, 0));
   const look_pos = car.pos.clone().add(new THREE.Vector3(0, 7, 0));
   
   camera.position.copy(cam_pos);
   camera.lookAt(look_pos);
+  
+  car.update(map);
   
   renderer.render(scene, camera);
 }
