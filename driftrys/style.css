@@ -3,15 +3,40 @@
   padding: 0;
 }
 
+#hud {
+  display: none;
+}
+
+#load {
+  top: 50%;
+  display: block;
+}
+
+#replay {
+  top: 50%;
+  display: none;
+}
+
+#menu {
+  display: none;
+  font-size: 40px;
+}
+
+.menu-btn {
+  font-size: 30px;
+}
+
 #lap_time {
-  top: 10px;
-  left: 10px;
+  top: 40px;
+  left: 40px;
+  position: absolute;
   text-align: left;
 }
 
 #run_time {
-  top: 10px;
-  right: 20px;
+  top: 40px;
+  right: 40px;
+  position: absolute;
   text-align: right;
 }
 
@@ -21,7 +46,7 @@
   font-size: 50px;
 }
 
-.label {
+.screen {
   position: absolute;
   width: 100%;
   z-index: 100;

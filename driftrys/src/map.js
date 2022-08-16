@@ -56,7 +56,7 @@ export class map_t {
     this.segments = null;
   }
   
-  load_map(map_path, scene, loader)
+  load_map(map_path, scene, loader, on_finish)
   {
     if (this.mesh) {
       this.mesh.parent.remove(this.mesh);
@@ -68,11 +68,14 @@ export class map_t {
       }
     }
     
-    this.init_track("assets/" + map_path + "/scene.track");
-    this.init_mesh("assets/" + map_path + "/scene.glb", scene, loader);
+    this.init_track("assets/" + map_path + "/scene.track", () => {
+      this.init_mesh("assets/" + map_path + "/scene.glb", scene, loader, () => {
+        on_finish();
+      });
+    });
   }
   
-  init_track(track_path)
+  init_track(track_path, on_finish)
   {
     this.segments = [];
     
@@ -81,14 +84,17 @@ export class map_t {
       
       for (const segment of track.segments)
         this.segments.push(parse_segment(segment));
+      
+      on_finish();
     });
   }
   
-  init_mesh(mdl_path, scene, loader)
+  init_mesh(mdl_path, scene, loader, on_finish)
   {
     loader.load(mdl_path, (gltf) => {
       this.mesh = gltf.scene;
       scene.add(this.mesh);
+      on_finish();
     }, undefined, function (error) {
       console.error(error);
     });

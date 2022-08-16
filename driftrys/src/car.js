@@ -5,6 +5,16 @@ import { Plane } from "./dr_math.js";
 
 const TIMESTEP = 0.015;
 
+class state_t {
+  constructor(pos, dir, vel, slip_angle)
+  {
+    this.pos = pos;
+    this.dir = dir;
+    this.vel = vel;
+    this.slip_angle = slip_angle;
+  }
+};
+
 export class car_t {
   pos;
   wheel_dir;
@@ -16,6 +26,7 @@ export class car_t {
   slip_angle;
   mesh;
   clip_seg_id;
+  replay_states;
   
   constructor()
   {
@@ -35,12 +46,14 @@ export class car_t {
     this.laps = [];
     this.start_time = new Date();
     
+    this.replay_states = [];
+    this.replay_frame = 0;
+    
     this.time_label = document.getElementById("time");
     this.run_time_label = document.getElementById("run_time");
     this.lap_time_label = document.getElementById("lap_time");
     
     this.headlight = null;
-    this.slip_particle = null;
     
     this.snd_tire = null;
     this.snd_tire_count = 0;
@@ -70,6 +83,9 @@ export class car_t {
     this.laps = [];
     this.start_time = new Date();
     
+    this.replay_states = [];
+    this.replay_frame = 0;
+
     this.snd_tire.setVolume(0);
   }
   
@@ -79,15 +95,31 @@ export class car_t {
     this.wheel_forces();
     this.clip_map(map);
     this.integrate();
-    this.track(map);
     
     this.update_snd();
-    this.update_particle();
     this.update_mesh();
+  }
+  
+  replay()
+  {
+    const replay_state = this.replay_states[this.replay_frame % this.replay_states.length]; 
+    this.pos.copy(replay_state.pos);
+    this.dir.copy(replay_state.dir);
+    this.vel.copy(replay_state.vel);
+    this.slip_angle = replay_state.slip_angle;
+    this.replay_frame++;
+  }
+  
+  record()
+  {
+    this.replay_states.push(new state_t(this.pos.clone(), this.dir.clone(), this.vel.clone(), this.slip_angle));
   }
   
   track(map)
   {
+    if (this.laps.length == 3)
+      return true;
+    
     const elapsed_time = new Date() - this.start_time;
     this.time_label.innerHTML = format_time(elapsed_time);
     
@@ -105,8 +137,6 @@ export class car_t {
         if (this.laps.length == 3) {
           this.lap_time_label.innerHTML += format_time(this.laps[2] - this.laps[1]);
           this.run_time_label.innerHTML += format_time(elapsed_time) + "<br>";
-          this.start_time = new Date();
-          this.laps = [];
         } else {
           this.lap_time_label.innerHTML = "LAP " + (this.laps.length + 1) + "/3<br>";
           let prev_lap = 0;
@@ -121,6 +151,8 @@ export class car_t {
       
       this.prev_seg_id = this.clip_seg_id;
     }
+    
+    return false;
   }
   
   reset_forces()
@@ -264,13 +296,14 @@ export class car_t {
     }
   }
   
-  init_mesh(scene, loader)
+  init_mesh(scene, loader, on_finish)
   {
-    this.headlight = new THREE.SpotLight(0xffff99, 60.0, 50.0);
+    this.headlight = new THREE.SpotLight(0xffff99, 20.0, 50.0);
     scene.add(this.headlight, this.headlight.target);
     loader.load("assets/ae86/untitled.glb", (gltf) => {
       this.mesh = gltf.scene;
       scene.add(this.mesh);
+      on_finish();
     }, undefined, function (error) {
       console.error(error);
     });
@@ -280,7 +313,7 @@ export class car_t {
   {
     if (this.headlight) {
       const car_dir = this.dir.clone().multiplyScalar(2);
-      const car_front = this.pos.clone().add(car_dir).setY(1.0);
+      const car_front = this.pos.clone().add(car_dir).setY(0.5);
       this.headlight.position.copy(car_front);
       this.headlight.target.position.copy(car_front.clone().add(car_dir));
       this.headlight.target.updateMatrix();
@@ -294,12 +327,14 @@ export class car_t {
     }
   }
   
-  init_snd(listener)
+  init_snd(listener, on_finish)
   {
     const audio_loader = new THREE.AudioLoader();
     audio_loader.load("assets/tire.ogg", (buffer) => {
       this.snd_tire = new THREE.Audio(listener);
       this.snd_tire.setBuffer(buffer);
+      this.mesh.add(this.snd_tire);
+      on_finish();
     });
   }
   
@@ -316,32 +351,6 @@ export class car_t {
     }
   }
   
-  init_particle(scene)
-  {
-    const shape = new THREE.Shape();
-    
-    shape.moveTo(0, 0);
-    shape.lineTo(1, 0);
-    shape.lineTo(1, 1);
-    shape.lineTo(0, 1);
-    shape.lineTo(0, 0);
-    
-    const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    
-    this.slip_particle = [];
-    
-    for (let i = 0; i < 4; i++) {
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.visible = false;
-      scene.add(mesh);
-      this.slip_particle.push(mesh);
-    }
-  }
-  
-  update_particle(scene)
-  {
-  }
 };
 
 function clamp(a, b, c)
