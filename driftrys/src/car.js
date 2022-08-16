@@ -47,6 +47,12 @@ export class car_t {
     this.snd_tire_tick = 0;
   }
   
+  set_map(map_name)
+  {
+    this.lap_time_label.innerHTML = "LAP 1/3";
+    this.run_time_label.innerHTML = map_name + "<br>";
+  }
+  
   reset()
   {
     this.pos = new THREE.Vector3();

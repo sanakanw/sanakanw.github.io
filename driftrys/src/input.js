@@ -9,14 +9,19 @@ export class input_t {
   mouse_y;
   canvas;
   mouse_button;
+  binds;
   
   constructor(canvas)
   {
+    this.binds = {};
     this.keys = {};
     this.inverse_fov = 10;
     this.canvas = canvas;
     this.mouse_down = false;
     document.addEventListener("keydown", (e) => {
+      if (this.binds[e.keyCode])
+        this.binds[e.keyCode]();
+      
       this.keys[e.keyCode] = true;
     });
     document.addEventListener("keyup", (e) => {
@@ -30,5 +35,10 @@ export class input_t {
       return false;
     
     return this.keys[key.charCodeAt(0)];
+  }
+  
+  bind(key, action)
+  {
+    this.binds[key.charCodeAt(0)] = action;
   }
 };

@@ -27,7 +27,15 @@ function init()
   car.init_snd(listener);
   car.init_particle(scene);
   map.load_map("dr_track_1", scene, loader);
+  car.set_map("dr_track_1");
   // init_bgm();
+  
+  input.bind("T", () => {
+    const map_name = "dr_track_" + prompt("MAP NO.");
+    map.load_map(map_name, scene, loader);
+    car.set_map(map_name);
+    car.reset();
+  });
 }
 
 function update()
@@ -55,15 +63,6 @@ function update()
   if (input.get_key("D"))
     car.steer(-0.4);
   car.brake(input.get_key(" "));
-  
-  if (input.get_key("1")) {
-    map.load_map("dr_track_1", scene, loader);
-    car.reset();
-  }
-  if (input.get_key("2")) {
-    map.load_map("dr_track_2", scene, loader);
-    car.reset();
-  }
   
   car.update(map);
   
