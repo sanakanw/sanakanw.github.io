@@ -119,8 +119,6 @@ function update()
     break;
   }
   
-  renderer.render(scene, camera);
-  
   tick++;
 }
 
@@ -275,8 +273,22 @@ window.addEventListener("resize", function() {
 
 init();
 
+let prev_time = new Date();
+let unprocessed_time = 0;
+
 function animate() {
-  update();
+  const new_time = new Date();
+  const elapsed_time = new_time - prev_time;
+  prev_time = new_time;
+  
+  unprocessed_time += elapsed_time;
+  
+  while (unprocessed_time >= 15) {
+    unprocessed_time -= 15;
+    update();
+  }
+  renderer.render(scene, camera);
+  
   window.requestAnimationFrame(animate);
 }
 animate();
