@@ -59,4 +59,15 @@ export class draw3d_t {
     
     this.draw.line(screen_a, screen_b);
   }
+  
+  plane(plane, length)
+  {
+    const p = vec2_t.mulf(plane.normal, plane.distance);
+    const tangent = vec2_t.cross_up(plane.normal, length);
+    const a = vec2_t.add(p, tangent);
+    const b = vec2_t.sub(p, tangent);
+    
+    this.line(a, b);
+    this.line(p, vec2_t.add(p, plane.normal));
+  }
 };

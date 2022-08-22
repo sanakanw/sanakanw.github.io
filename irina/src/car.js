@@ -1,6 +1,6 @@
 "use strict";
 
-import { clamp, vec2_t } from "./math.js";
+import { clamp, vec2_t, plane_t } from "./math.js";
 
 const TIMESTEP = 0.015;
 
@@ -13,6 +13,7 @@ export class car_t {
   ang_vel;
   is_brake;
   grip_loss;
+  clipped_segment_id;
   
   constructor()
   {
@@ -24,6 +25,7 @@ export class car_t {
     this.ang_vel = 0;
     this.is_brake = false;
     this.grip_loss = false;
+    this.clipped_segment_id = -1;
   }
   
   reset_forces()
@@ -69,7 +71,7 @@ export class car_t {
     const r_grip = this.is_brake ? 0.65 / 2.0 : 0.65;
     
     const r_r = vec2_t.mulf(this.dir, -1);
-    const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, this.ang_vel));
+    const r_vel = vec2_t.add(this.vel, vec2_t.cross_up(r_r, -this.ang_vel));
     const r_spd = vec2_t.length(r_vel);
     const r_normal = this.dir;
     const r_tangent = vec2_t.cross_up(r_normal, 1);
@@ -77,10 +79,10 @@ export class car_t {
     const r_alpha = clamp(r_slip_angle, -r_grip, r_grip) * r_spd;
     const r_beta = vec2_t.dot(r_normal, r_vel);
     const r_f_lateral = vec2_t.mulf(r_tangent, -C_lat * r_alpha);
-    const r_f_longtitudinal = vec2_t.mulf(r_normal, -0.01 * r_beta);
+    const r_f_longtitudinal = vec2_t.mulf(r_normal, -C_long * r_beta);
     
     const f_r = this.dir;
-    const f_vel = vec2_t.add(this.vel, vec2_t.cross_up(f_r, this.ang_vel));
+    const f_vel = vec2_t.add(this.vel, vec2_t.cross_up(f_r, -this.ang_vel));
     const f_spd = vec2_t.length(f_vel);
     const f_normal = vec2_t.rotate(this.dir, this.wheel_dir);
     const f_tangent = vec2_t.cross_up(f_normal, 1);
@@ -100,7 +102,6 @@ export class car_t {
     const f_I = I;
     
     const ang_accel = r_I * vec2_t.cross(r_r, r_f_net) + f_I * vec2_t.cross(f_r, f_f_net);
-    
     this.ang_vel += ang_accel * TIMESTEP;
     this.force = vec2_t.add(this.force, f_net);
     
@@ -141,5 +142,59 @@ export class car_t {
     this.dir = vec2_t.rotate(this.dir, this.ang_vel * TIMESTEP);
     this.vel = vec2_t.add(this.vel, vec2_t.mulf(this.force, TIMESTEP));
     this.pos = vec2_t.add(this.pos, vec2_t.mulf(this.vel, TIMESTEP));
+  }
+  
+  clip(map)
+  {
+    if (this.clipped_segment_id == -1) {
+      for (let i = 0; i < map.segments.length - 1; i++) {
+        if (map.check_point(i, this.pos))
+          this.clipped_segment_id = i;
+      }
+    } else {
+      const segs_behind = this.clipped_segment_id;
+      const segs_ahead = map.segments.length - this.clipped_segment_id;
+      
+      const max_segs = Math.max(segs_behind, segs_ahead);
+      
+      const segment_id = this.clipped_segment_id
+      
+      this.clipped_segment_id = -1;
+      for (let i = 0; i < max_segs; i++) {
+        const behind_id = segment_id - i < 0 ? map.segments.length - i : segment_id - i;
+        const ahead_id = (segment_id + i) % map.segments.length;
+        
+        if (map.check_point(behind_id, this.pos)) {
+          this.clipped_segment_id = behind_id;
+          break;
+        }
+        
+        if (map.check_point(ahead_id, this.pos)) {
+          this.clipped_segment_id = ahead_id;
+          break;
+        }
+      }
+    }
+    
+    document.getElementById("seg_id").innerHTML = this.clipped_segment_id;
+    
+    if (this.clipped_segment_id != -1) {
+      const segment = map.segments[this.clipped_segment_id];
+      
+      const new_pos = vec2_t.add(this.pos, vec2_t.mulf(this.vel, TIMESTEP));
+      
+      const clip_side_a = vec2_t.plane_project(new_pos, segment.side_a) - 0.5;
+      const clip_side_b = vec2_t.plane_project(new_pos, segment.side_b) - 0.5;
+      
+      if (clip_side_a < 0) {
+        const fix = -(vec2_t.dot(this.vel, segment.side_a.normal) + 0.2 * clip_side_a / TIMESTEP);
+        this.vel = vec2_t.add(this.vel, vec2_t.mulf(segment.side_a.normal, fix));
+      }
+      
+      if (clip_side_b < 0) {
+        const fix = -(vec2_t.dot(this.vel, segment.side_b.normal) + 0.2 * clip_side_b / TIMESTEP);
+        this.vel = vec2_t.add(this.vel, vec2_t.mulf(segment.side_b.normal, fix));
+      }
+    }
   }
 };

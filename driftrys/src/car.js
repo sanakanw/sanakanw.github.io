@@ -5,6 +5,15 @@ import { Plane } from "./dr_math.js";
 
 const TIMESTEP = 0.015;
 
+let C_lat = 0.7;
+let f_grip = 0.65; 
+
+export function put_in_numbers()
+{
+  C_lat = parseFloat(prompt("lateral friction something something (increases steering i think). original is 0.7"));
+  f_grip = parseFloat(prompt("grip. original is 0.65"));
+}
+
 class state_t {
   constructor(pos, dir, vel, slip_angle)
   {
@@ -12,6 +21,37 @@ class state_t {
     this.dir = dir;
     this.vel = vel;
     this.slip_angle = slip_angle;
+  }
+};
+
+class particle_t {
+  constructor(mesh)
+  {
+    this.mesh = mesh;
+    this.vel = new THREE.Vector3(0, 0, 0);
+    this.life = 0;
+  }
+  
+  shoot(origin, vel, life)
+  {
+    this.mesh.position.copy(origin);
+    this.vel = vel;
+    this.life = life;
+    this.mesh.visible = true;
+  }
+  
+  update()
+  {
+    if (this.life > 0) {
+      this.vel.sub(this.vel.clone().multiplyScalar(this.vel.length() * 0.3));
+      this.mesh.position.add(this.vel);
+      this.mesh.rotation.x += (Math.random() - 0.5) * 0.5;
+      this.mesh.rotation.y += (Math.random() - 0.5) * 0.5;
+      this.mesh.rotation.z += (Math.random() - 0.5) * 0.25;
+      this.life--;
+    } else if (this.mesh.visible) {
+      this.mesh.visible = false;
+    }
   }
 };
 
@@ -27,6 +67,8 @@ export class car_t {
   mesh;
   clip_seg_id;
   replay_states;
+  slip_particles;
+  slip_frame;
   
   constructor()
   {
@@ -38,7 +80,10 @@ export class car_t {
     this.ang_vel = 0.0;
     this.is_brake = false;
     this.slip_angle = 0;
+    
     this.mesh = null;
+    this.slip_particles = null;
+    this.slip_frame = 0;
     
     this.clip_seg_id = -1;
     this.prev_seg_id = -1;
@@ -98,6 +143,7 @@ export class car_t {
     
     this.update_snd();
     this.update_mesh();
+    this.update_particles();
   }
   
   replay()
@@ -192,11 +238,11 @@ export class car_t {
   
   wheel_forces()
   {
-    const C_lat = 0.7;
+    // const C_lat = 0.8;
     const C_long = 0.01;
     
-    const f_grip = 0.65;
-    const r_grip = this.is_brake ? 0.65 * 2.0 / 3.0 : 0.65;
+    // const f_grip = 0.58;
+    const r_grip = this.is_brake ? f_grip * 2.0 / 3.0 : f_grip;
     
     const r_r = this.dir.clone().multiplyScalar(-1);
     const r_vel = this.vel.clone().add(r_r.clone().cross(new THREE.Vector3(0, -this.ang_vel, 0)));
@@ -351,6 +397,45 @@ export class car_t {
     }
   }
   
+  init_particles(scene)
+  {
+    this.slip_particles = [];
+    const texture = new THREE.TextureLoader().load("assets/smoke.png");
+    for (let i = 0; i < 100; i++) {
+      const shape = new THREE.Shape();
+      const size = 1.5;
+      shape.moveTo(-size, -size);
+      shape.lineTo(+size, -size);
+      shape.lineTo(+size, +size);
+      shape.lineTo(-size, size);
+      const geometry = new THREE.ShapeGeometry(shape);
+      const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.3 });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      this.slip_particles.push(new particle_t(mesh));
+    }
+  }
+  
+  update_particles()
+  {
+    if (this.slip_angle > 0.4 && this.vel.length() > 10) {
+      const intensity = Math.floor((this.slip_angle - 0.4) / 0.6 * 40);
+      for (let i = 0; i < intensity ; i++) {
+        const random_particle = this.slip_particles[Math.floor(Math.random() * this.slip_particles.length)];
+        const random_rotation = new THREE.Euler(0, (Math.random() - 0.5) * Math.PI, 0);
+        const particle_dir = this.vel.clone().normalize().multiplyScalar(-0.2).applyEuler(random_rotation).setY(Math.random() * 0.6);
+        const particle_origin = this.pos.clone().sub(this.dir.clone()).add(new THREE.Vector3(Math.random(), 0, Math.random()));
+        random_particle.shoot(particle_origin, particle_dir, Math.random() * 40);
+      }
+      
+      this.slip_frame++;
+    } else {
+      this.slip_frame = 0;
+    }
+    
+    for (const particle of this.slip_particles)
+      particle.update();
+  }
 };
 
 function clamp(a, b, c)

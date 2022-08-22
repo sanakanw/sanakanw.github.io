@@ -14,7 +14,7 @@ function main()
   const input = new input_t(document.getElementById("display"));
   const camera = new camera_t();
   const draw3d = new draw3d_t(draw, camera);
-  const map = new map_t();
+  const map = new map_t("assets/scene.track");
   const car = new car_t();
   
   camera.set_fov(to_rad(60));
@@ -40,6 +40,8 @@ function main()
     
     car.wheel_reset();
     car.wheel_forces();
+    
+    car.clip(map);
     car.integrate();
     
     camera.pos = vec2_t.sub(car.pos, vec2_t.mulf(car.dir, 7));
@@ -48,7 +50,6 @@ function main()
     draw.clear();
     
     car.draw3d(draw3d);
-    
     map.draw3d(draw3d);
     
     t += 15 / 1000.0;

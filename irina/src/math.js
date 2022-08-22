@@ -27,7 +27,7 @@ export class vec2_t {
 
   static cross_up(a, b)
   {
-    return new vec2_t(-a.y * b, a.x * b);
+    return new vec2_t(a.y * b, -a.x * b);
   }
   
   static cross(a, b)
@@ -69,6 +69,11 @@ export class vec2_t {
     else
       return new vec2_t(0.0, 0.0);
   }
+  
+  static plane_project(v, plane)
+  {
+    return vec2_t.dot(v, plane.normal) - plane.distance;
+  }
 };
 
 export class plane_t {
@@ -76,6 +81,11 @@ export class plane_t {
   {
     this.normal = normal;
     this.distance = distance;
+  }
+  
+  static flip(plane)
+  {
+    return new plane_t(vec2_t.mulf(plane.normal, -1), -plane.distance);
   }
 };
 

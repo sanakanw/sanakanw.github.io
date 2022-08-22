@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { map_t } from "./map.js";
 import { input_t } from "./input.js";
-import { car_t } from "./car.js";
+import { put_in_numbers, car_t } from "./car.js";
 
 const GAME_STATE_LOAD = 0;
 const GAME_STATE_MENU = 1;
@@ -43,6 +43,7 @@ function init()
   scene.add(ambientLight);
   
   car.init_mesh(scene, loader, () => {
+    car.init_particles(scene);
     car.init_snd(listener, () => {
       map.load_map("dr_track_1", scene, loader, () => {
         load_state_menu();
@@ -50,6 +51,10 @@ function init()
         init_bgm();
       })
     })
+  });
+  
+  input.bind("O", () => {
+    put_in_numbers();
   });
   
   init_skybox();
@@ -230,6 +235,7 @@ function game_replay()
   car.replay();
   car.update_snd();
   car.update_mesh();
+  car.update_particles();
 }
 
 function init_bgm()
@@ -254,12 +260,12 @@ function init_skybox()
 {
   const loader = new THREE.CubeTextureLoader();
   const texture = loader.load([
-    "assets/night_skybox/left.png",
-    "assets/night_skybox/right.png",
-    "assets/night_skybox/up.png",
-    "assets/night_skybox/down.png",
-    "assets/night_skybox/front.png",
-    "assets/night_skybox/back.png",
+    "assets/night_skybox/left.jpeg",
+    "assets/night_skybox/right.jpeg",
+    "assets/night_skybox/up.jpeg",
+    "assets/night_skybox/down.jpeg",
+    "assets/night_skybox/front.jpeg",
+    "assets/night_skybox/back.jpeg",
   ]);
   
   scene.background = texture;
@@ -291,4 +297,5 @@ function animate() {
   
   window.requestAnimationFrame(animate);
 }
+
 animate();
