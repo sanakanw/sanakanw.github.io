@@ -319,7 +319,7 @@ class tree_t {
 const TIMESTEP = 0.015;
 const TIMESCALE = 1.0;
 
-const cam = new cam_t(5.0);
+const cam = new cam_t(10.0);
 const pen = new pen_t(document.getElementById("display"), cam);
 const input = new input_t(document.getElementById("display"));
 
