@@ -1,0 +1,51 @@
+.item > img {
+	margin: 0;
+	padding: 0;
+	
+	background-color: rgba(100, 100, 100, 0.5);
+	filter: brightness(30%);
+	
+	transition: 1.0s;
+}
+
+.item:hover > img {
+	background-color: rgba(100, 100, 100, 0.5);
+	filter: brightness(100%);
+}
+
+.item > h1 {
+	position: absolute;
+	text-align: center;
+	margin: 50px;
+	font-size: 3.0em;
+	font-family: "Exo 2", sans-serif;
+	font-weight: 200;
+	z-index: 10;
+}
+
+.fullwidth {
+	position: relative;
+	
+	margin: auto;
+	margin-bottom: 1%;
+}
+
+.fullwidth > img { width: 100%; }
+
+.left {
+	position: relative;
+	width: 49.5%;
+	float: left;
+	display: inline-block;
+}
+
+.left > img { width: 100%; }
+
+.right {
+	position: relative;
+	float: right;
+	width: 49.5%;
+	display: inline-block;
+}
+
+.right > img { width: 100%; }

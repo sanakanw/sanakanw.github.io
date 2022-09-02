@@ -1,0 +1,122 @@
+@import url(https://fonts.googleapis.com/css?family=Exo+2:300,300italic,200,200italic,400,400italic,500,500italic,600,600italic,700,700italic,900);
+
+body {
+	background-color: #000000;
+	font-family: "Exo 2", sans-serif;
+	color: #ffffff;
+	
+	padding: 0;
+	margin: 0;
+	
+	overflow: hidden;
+}
+
+.home-nav {
+	padding: 2%;
+	position: absolute;
+}
+.home-nav > nav > a {
+  padding: 10px;
+  
+  font-size: 14pt;
+  font-weight: 200;
+  
+  text-decoration: none;
+  color: #ffffff;
+  display: block;
+  letter-spacing: 0.1em;
+  
+  transition: padding-left 0.5s, color 0.5s;
+}
+
+.home-nav > nav > a:hover {
+  padding-left: 30px;
+  color: #e3e3e3;
+}
+
+.contact-links {
+	position: absolute;
+	right: 0;
+	
+	padding: 1%;
+}
+		
+.contact-links > nav > a {
+  padding-left: 15pt;
+  display: inline-block;
+  font-size: 1.70em;
+  text-decoration: none;
+  color: white;
+  
+  line-height: 1.8em;
+  
+  transition: font-size 0.5s, color 0.5s;
+}
+
+.contact-links > nav > a:hover {
+  font-size: 2.0em;
+  color: #3e3e3e;
+}
+
+.main {
+	width: 100%;
+	height: 100%;
+}
+
+.main > .main-logo {
+  display: block;
+  position: absolute;
+  
+  top: 48%;
+  left: 50%;
+  margin-top: -256px;
+  margin-left: -256px;
+  
+  z-index: 3;
+  
+  cursor: pointer;
+}
+
+		
+@keyframes cyan-move {
+	3% {
+		transform: translate(-10px, 0px);
+		opacity: 0.6;
+	}
+	
+	6% {
+		transform: translate(-10px, 6px);
+		opacity: 0.6;
+	}
+	
+	9% {
+		transform: translate(0px, 0px);
+		opacity: 0.0;
+	}
+}
+@keyframes magenta-move {
+	3% {
+		transform: translate(10px, 0px);
+		opacity: 0.6;
+	}
+	
+	6% {
+		transform: translate(10px, -6px);
+		opacity: 0.6;
+	}
+	
+	9% {
+		transform: translate(0px, 0px);
+		opacity: 0.0;
+	}
+}
+
+.cyan {
+	animation: cyan-move 4s infinite;
+	opacity: 0.0;
+}
+
+.magenta {
+	animation: magenta-move 4s infinite;
+	opacity: 0.0;
+}
