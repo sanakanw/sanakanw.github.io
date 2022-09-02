@@ -363,13 +363,13 @@ function main()
 
 function spawn_trees()
 {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 43; i++) {
     let rand_pos;
     let should_spawn = false;
     let tries = 0;
     
     do {
-      rand_pos = new vec2_t(rand() * (map_range - 2) * 2 - 4, rand() * (map_range - 2) * 2 - 4);
+      rand_pos = new vec2_t(rand() * (map_range - 2) * 2, rand() * (map_range - 2) * 2);
       should_spawn = true;
       for (let j = 0; j < trees.length; j++) {
         if (rand_pos.sub(trees[j].pos).length() < 5)
