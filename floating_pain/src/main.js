@@ -366,15 +366,17 @@ function spawn_trees()
   for (let i = 0; i < 50; i++) {
     let rand_pos;
     let should_spawn = false;
+    let tries = 0;
     
     do {
-      rand_pos = new vec2_t(rand() * map_range * 2, rand() * map_range * 2);
+      rand_pos = new vec2_t(rand() * (map_range - 2) * 2 - 4, rand() * (map_range - 2) * 2 - 4);
       should_spawn = true;
       for (let j = 0; j < trees.length; j++) {
         if (rand_pos.sub(trees[j].pos).length() < 5)
           should_spawn = false;
       }
-    } while (!should_spawn);
+      tries++;
+    } while (!should_spawn && tries < 10);
     trees.push(new tree_t(rand_pos, 0.5 + rand() * 0.1));
   }
 }
@@ -384,9 +386,10 @@ function spawn_titans()
   for (let i = 0; i < 10; i++) {
     let rand_pos;
     let should_spawn = false;
+    let tries = 0;
     
     do {
-      rand_pos = new vec2_t(rand() * map_range * 2, rand() * map_range * 2);
+      rand_pos = new vec2_t(rand() * (map_range - 2) * 2, rand() * (map_range - 2) * 2);
       should_spawn = true;
       for (let j = 0; j < trees.length; j++) {
         if (rand_pos.sub(trees[j].pos).length() < 1)
@@ -396,7 +399,8 @@ function spawn_titans()
         if (rand_pos.sub(titans[j].pos).length() < 3)
           should_spawn = false;
       }
-    } while (!should_spawn);
+      tries++;
+    } while (!should_spawn && tries < 10);
     titans[i] = new titan_t(rand_pos, 0.5 + rand() * 0.1);
   }
 }
