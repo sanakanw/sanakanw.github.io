@@ -357,12 +357,13 @@ function main()
     pain.hook.release();
     pain.hook_b.release();
     spawn_titans();
+    start_time = new Date();
   });
 }
 
 function spawn_trees()
 {
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     let rand_pos;
     let should_spawn = false;
     
@@ -370,7 +371,7 @@ function spawn_trees()
       rand_pos = new vec2_t(rand() * map_range * 2, rand() * map_range * 2);
       should_spawn = true;
       for (let j = 0; j < trees.length; j++) {
-        if (rand_pos.sub(trees[j].pos).length() < 3)
+        if (rand_pos.sub(trees[j].pos).length() < 5)
           should_spawn = false;
       }
     } while (!should_spawn);
@@ -402,9 +403,14 @@ function spawn_titans()
 
 let prev_wheel = 0;
 
+let start_time = new Date();
+
 function update()
 {
   let hook_dir;
+  
+  const elapsed_time = new Date() - start_time;
+  document.getElementById("time").innerHTML = format_time(elapsed_time);
   
   const SENSITIVITY = 0.1;
   if (cam_mode == MODE_ORIGINAL) {
@@ -452,6 +458,13 @@ function update()
       pain.reel_out();
     prev_wheel = input.get_wheel();
   }
+  
+  let titan_sum = 0;
+  for (const titan of titans) {
+    if (titan.alive)
+      titan_sum++;
+  }
+  document.getElementById("count").innerHTML = "titans: " + titan_sum + "/10";
   
   if (input.get_key(key_t.SHIFT))
     pain.gas(move_dir);
@@ -508,3 +521,12 @@ setInterval(function() {
   update();
   draw();
 }, TIMESTEP * 1000);
+
+function format_time(elapsed_time)
+{
+  const minutes = Math.floor(elapsed_time / 60000) % 10;
+  const seconds = Math.floor(elapsed_time / 1000) % 60;
+  const miliseconds = Math.floor(elapsed_time / 10) % 100;
+  
+  return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0") + ":" + miliseconds.toString().padStart(2, "0");
+}
