@@ -289,7 +289,8 @@ export class pain_t {
       if (hit.depth > 0) {  
         const beta = 0.1 * hit.depth / TIMESTEP;
         const lambda = -(this.vel.dot(hit.normal) - beta);
-        this.vel = this.vel.add(hit.normal.mulf(lambda));
+        if (lambda > 0)
+          this.vel = this.vel.add(hit.normal.mulf(lambda));
       }
     }
     
@@ -301,6 +302,7 @@ export class pain_t {
       if (hit.depth > 0) {  
         const beta = 0.5 * hit.depth / TIMESTEP;
         const lambda = -(this.vel.dot(hit.normal) - beta);
+        if (lambda > 0)
         this.vel = this.vel.add(hit.normal.mulf(lambda));
       }
       
