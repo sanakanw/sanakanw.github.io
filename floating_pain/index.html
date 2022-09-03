@@ -14,17 +14,21 @@
   <body>
     <canvas width="800" height="800" id="display"></canvas>
     <script src="src/main.js" type="module"></script>
-    <p id="kills" style="position: fixed; top: 0; float: left; text-align: justifty;">
-      ------- CONTROLS --------<BR>
-      SHIFT - GAS<BR>
-      SPACE/SCROLL DOWN - REEL IN<BR>
-      Q/E - HOOK<BR>
-      ALT/SCROLL UP - REEL OUT<BR>
-      T - RESTART<BR>
-      C - CHANGE CAMERA<BR>
-      <br>
-      --------- DAMAGE ---------
-    </p>
+    <div style="position: fixed; top: 0; float: left; text-align: justifty;">
+      <p>
+        ------- CONTROLS --------<BR>
+        SHIFT - GAS<BR>
+        DOUBLE TAP W,A,S,D - GAS BURST<BR>
+        SPACE/SCROLL DOWN - REEL IN<BR>
+        Q/E - HOOK<BR>
+        ALT/SCROLL UP - REEL OUT<BR>
+        T - RESTART<BR>
+        C - CHANGE CAMERA<BR>
+      </p>
+      <p id="kills">
+      ---------- DAMAGE ----------
+      </p>
+    </div>
     <p id="time"></p>
     <p id="count">titans: 10/10</p>
   </body>

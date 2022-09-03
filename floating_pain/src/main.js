@@ -106,6 +106,31 @@ export class hook_t {
   }
 };
 
+export class particle_t {
+  constructor()
+  {
+    this.pos = new vec2_t();
+    this.vel = new vec2_t();
+    this.life = 0;
+  }
+  
+  shoot(origin, dir, life, size)
+  {
+    this.pos = origin;
+    this.vel = dir;
+    this.life = life;
+    this.size = size;
+  }
+  
+  update()
+  {
+    if (this.life > 0) {
+      this.pos = this.pos.add(this.vel.mulf(TIMESTEP));
+      this.life--;
+    }
+  }
+};
+
 export class pain_t {
   constructor()
   {
@@ -113,14 +138,24 @@ export class pain_t {
     this.vel = new vec2_t();
     this.hook = new hook_t();
     this.hook_b = new hook_t();
+    this.particles = [];
+    this.particle_idx = 0;
     this.is_gas = false;
     this.is_reel_out = false;
+    this.gas_tick = 0;
+    this.gas_burst_tick = 0;
+    this.gas_burst_dir = new vec2_t();
+    
+    for (let i = 0; i < 20; i++)
+      this.particles.push(new particle_t());
   }
   
   update(trees, titans)
   {
-    if (this.is_gas)
-      this.apply_gas();
+    if (this.gas_burst_tick) {
+      this.vel = this.vel.add(this.gas_burst_dir.mulf(-7 / 80));
+      this.gas_burst_tick--;
+    }
     
     this.constrain();
     
@@ -149,11 +184,20 @@ export class pain_t {
       this.pos.y = +map_range - 0.1;
       this.vel.y = 0;
     }
+    
+    for (const particle of this.particles)
+      particle.update();
   }
   
-  apply_gas()
+  gas_burst(dir)
   {
-    this.vel = this.vel.add(this.vel.normalize().mulf(1.0 * TIMESTEP));
+    if (this.gas_burst_tick > 0)
+      return;
+    
+    this.gas_burst_tick = 60;
+    this.gas_burst_dir = dir;
+    this.vel = this.vel.add(dir.mulf(7));
+    this.emit_gas(dir.mulf(-2), 40, 0.25);
   }
   
   integrate()
@@ -263,16 +307,30 @@ export class pain_t {
       const nape_hit = check_circle(this.pos, 0.1, titan.get_nape(), 0.3);
       if (nape_hit.depth > 0) {
         titan.alive = false;
-        kills.innerHTML += "<BR>" + Math.floor(this.vel.length() * 1.1 * 100);
+        kills.innerHTML += "<BR>" + Math.floor(this.vel.length() * 0.7 * 100);
         // no i cant be bothered to release hook when titan dies
       }
     }
   }
   
+  emit_gas(dir, life, size)
+  {
+      const next_particle = this.particle_idx;
+      this.particle_idx = (this.particle_idx + 1) % 20;
+      this.particles[next_particle].shoot(this.pos, dir, life, size);
+  }
+  
   gas(gas_dir)
   {
     this.is_gas = true;
-    this.vel = this.vel.add(gas_dir.mulf(TIMESTEP));
+    const f_move = gas_dir.mulf(3);
+    const f_accel = this.vel.normalize();
+    const accel_dir = f_accel.add(f_move); 
+    
+    if (this.gas_tick++ % 3 == 0)
+      this.emit_gas(accel_dir.rotate(rand() * 2.0).mulf(-0.5), 30, 0.1);
+    
+    this.vel = this.vel.add(accel_dir.mulf(TIMESTEP));
   }
   
   reel_out()
@@ -327,6 +385,25 @@ const pain = new pain_t();
 const trees = [];
 const titans = [];
 
+let move_status = {
+  forward: {
+    last_pressed: new Date(),
+    down: false
+  },
+  left: {
+    last_pressed: new Date(),
+    down: false
+  },
+  back: {
+    last_pressed: new Date(),
+    down: false
+  },
+  right: {
+    last_pressed: new Date(),
+    down: false
+  }
+};
+
 const MODE_ORIGINAL = 0;
 const MODE_TPS = 1;
 
@@ -358,12 +435,13 @@ function main()
     pain.hook_b.release();
     spawn_titans();
     start_time = new Date();
+    kills.innerHTML = "---------- DAMAGE ----------";
   });
 }
 
 function spawn_trees()
 {
-  for (let i = 0; i < 43; i++) {
+  for (let i = 0; i < 30; i++) {
     let rand_pos;
     let should_spawn = false;
     let tries = 0;
@@ -405,6 +483,24 @@ function spawn_titans()
   }
 }
 
+function modify_move(dir, key_state)
+{
+  let move_state = false;
+  if (key_state) {
+    if (!move_status[dir].down) {
+      const elapsed_time = new Date() - move_status[dir].last_pressed;
+      if (elapsed_time < 250)
+        move_state = true;
+      move_status[dir].down = true;
+      move_status[dir].last_pressed = new Date();
+    }
+  } else {
+    move_status[dir].down = false;
+  }
+  
+  return move_state;
+}
+
 let prev_wheel = 0;
 
 let start_time = new Date();
@@ -427,7 +523,7 @@ function update()
   
   if (input.get_key(key_t.code("E"))) {
     if (!pain.hook.active) {
-      pain.hook.shoot(pain.pos, hook_dir.mulf(30));
+      pain.hook.shoot(pain.pos, hook_dir.mulf(40));
     }
   } else {
     if (pain.hook.active)
@@ -436,7 +532,7 @@ function update()
   
   if (input.get_key(key_t.code("Q"))) {
     if (!pain.hook_b.active) {
-      pain.hook_b.shoot(pain.pos, hook_dir.mulf(30));
+      pain.hook_b.shoot(pain.pos, hook_dir.mulf(40));
     }
   } else {
     if (pain.hook_b.active)
@@ -444,14 +540,38 @@ function update()
   }
   
   let move_dir = new vec2_t();
-  if (input.get_key(key_t.code("W")))
+  if (input.get_key(key_t.code("W"))) {
     move_dir = move_dir.add(new vec2_t(0, +1));
-  if (input.get_key(key_t.code("A")))
+    if (modify_move("forward", true))
+      pain.gas_burst(new vec2_t(0, 1).rotate(cam.rot));
+  } else {
+    modify_move("forward", false);
+  }
+  
+  if (input.get_key(key_t.code("A"))) {
     move_dir = move_dir.add(new vec2_t(-1, 0));
-  if (input.get_key(key_t.code("S")))
+    if (modify_move("left", true))
+      pain.gas_burst(new vec2_t(-1, 0).rotate(cam.rot));
+  } else {
+    modify_move("left", false);
+  }
+  
+  if (input.get_key(key_t.code("S"))) {
     move_dir = move_dir.add(new vec2_t(0, -1));
-  if (input.get_key(key_t.code("D")))
+    if (modify_move("back", true))
+      pain.gas_burst(new vec2_t(0, -1).rotate(cam.rot));
+  } else {
+    modify_move("back", false);
+  }
+  
+  if (input.get_key(key_t.code("D"))) {
     move_dir = move_dir.add(new vec2_t(+1, 0));
+    if (modify_move("right", true))
+      pain.gas_burst(new vec2_t(+1, 0).rotate(cam.rot));
+  } else {
+    modify_move("right", false);
+  }
+  
   move_dir = move_dir.rotate(cam.rot);
   
   if (input.get_wheel() != prev_wheel) {
@@ -507,6 +627,12 @@ function draw()
       continue;
     pen.circle(titan.pos, titan.radius);
     pen.rect(titan.get_nape(), 0.3, 0.3);
+  }
+  
+  pen.color("gray");
+  for (const particle of pain.particles) {
+    if (particle.life > 0)
+      pen.rect(particle.pos, particle.size, particle.size);
   }
   
   pen.color("green");
