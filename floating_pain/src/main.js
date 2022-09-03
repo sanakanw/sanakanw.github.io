@@ -455,7 +455,7 @@ function spawn_trees()
       }
       tries++;
     } while (!should_spawn && tries < 10);
-    trees.push(new tree_t(rand_pos, 0.5 + rand() * 0.1));
+    trees.push(new tree_t(rand_pos, 0.7 + rand() * 0.1));
   }
 }
 
@@ -479,7 +479,7 @@ function spawn_titans()
       }
       tries++;
     } while (!should_spawn && tries < 10);
-    titans[i] = new titan_t(rand_pos, 0.5 + rand() * 0.1);
+    titans[i] = new titan_t(rand_pos, 0.6 + rand() * 0.1);
   }
 }
 
