@@ -289,8 +289,7 @@ export class pain_t {
       if (hit.depth > 0) {  
         const beta = 0.1 * hit.depth / TIMESTEP;
         const lambda = -(this.vel.dot(hit.normal) - beta);
-        if (lambda > 0)
-          this.vel = this.vel.add(hit.normal.mulf(lambda));
+        this.vel = this.vel.add(hit.normal.mulf(lambda));
       }
     }
     
@@ -302,7 +301,6 @@ export class pain_t {
       if (hit.depth > 0) {  
         const beta = 0.5 * hit.depth / TIMESTEP;
         const lambda = -(this.vel.dot(hit.normal) - beta);
-        if (lambda > 0)
         this.vel = this.vel.add(hit.normal.mulf(lambda));
       }
       
@@ -457,7 +455,7 @@ function spawn_trees()
       }
       tries++;
     } while (!should_spawn && tries < 10);
-    trees.push(new tree_t(rand_pos, 0.7 + rand() * 0.1));
+    trees.push(new tree_t(rand_pos, 0.5 + rand() * 0.1));
   }
 }
 
@@ -481,7 +479,7 @@ function spawn_titans()
       }
       tries++;
     } while (!should_spawn && tries < 10);
-    titans[i] = new titan_t(rand_pos, 0.6 + rand() * 0.1);
+    titans[i] = new titan_t(rand_pos, 0.5 + rand() * 0.1);
   }
 }
 
@@ -514,12 +512,15 @@ function update()
   const elapsed_time = new Date() - start_time;
   document.getElementById("time").innerHTML = format_time(elapsed_time);
   
-  const SENSITIVITY = 0.1;
+  const sensitivity = document.getElementById("sensitivity").value / 10;
   if (cam_mode == MODE_ORIGINAL) {
     const mouse_pos = cam.from_cam_space(input.mouse_pos().rotate(cam.rot));
+    const d_rot = input.mouse_pos().x * sensitivity * 0.01;
+    if (Math.abs(d_rot) > 0.01)
+      cam.rot -= d_rot;
     hook_dir = mouse_pos.sub(pain.pos).normalize();
   } else {
-    cam.rot = -input.mouse_pos().x * SENSITIVITY * 10;
+    cam.rot = -input.mouse_pos().x * sensitivity * 0.5;
     hook_dir = new vec2_t(0, 1).rotate(cam.rot).normalize();
   }
   
