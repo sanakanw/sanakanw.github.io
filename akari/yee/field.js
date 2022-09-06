@@ -42,7 +42,7 @@ export class field_t {
       
       for (let x = 0; x < width; x++) {
         if (Math.random() >= 0.0)
-          this.cells[y].push(new cell_t(new vec2_t(0.0, 0.0), 0.0, 1.0, 1.0, 0.4));
+          this.cells[y].push(new cell_t(new vec2_t(0.0, 0.0), 0.0, 1.0, 1.0, 0.01));
       }
     }
   }
@@ -55,16 +55,22 @@ export class field_t {
   
   emit1(pos, charge)
   {
-    for (let y = 1; y < this.height; y++) {
-      for (let x = 1; x < this.width; x++) {
-        const cell_pos = vec2_t.sub(new vec2_t(x, y), new vec2_t(this.width / 2, this.height / 2));
+    const xd = pos.x - Math.floor(pos.x);
+    const yd = pos.y - Math.floor(pos.y);
+    
+    const d = 2;
+    
+    for (let y = -d; y <= d; y++) {
+      for (let x = -d; x <= d; x++) {
+        const xp = Math.floor(pos.x + x) + this.width / 2;
+        const yp = Math.floor(pos.y + y) + this.height / 2;
         
-        const E_x = E(vec2_t.sub(vec2_t.add(cell_pos, new vec2_t(0, -0.5)), pos));
-        const E_y = E(vec2_t.sub(vec2_t.add(cell_pos, new vec2_t(-0.5, 0)), pos));
+        if (xp < 0 || yp < 0 || xp >= this.width || yp >= this.height)
+          continue;
         
-        const E_pos = vec2_t.mulf(new vec2_t(E_x.x, E_y.y), charge);
+        const cell_pos = new vec2_t(x - xd, y - xd);
         
-        this.cells[y][x].E = E_pos;
+        this.cells[yp][xp].E = vec2_t.add(this.cells[yp][xp].E, E(cell_pos));
       }
     }
   }
@@ -172,7 +178,7 @@ export class field_t {
         const cell = this.cells[y][x];
         
         const len_H = Math.min(5 * Math.abs(cell.H), 0.25);
-        const col_H = Math.min(Math.abs(cell.H) * 5000, 255);
+        const col_H = Math.min(Math.abs(cell.H) * 50000, 255);
         
         const len_E = Math.min(3 * Math.abs(vec2_t.length(cell.E)), 0.5);
         const vec_E = vec2_t.mulf(vec2_t.normalize(cell.E), len_E);

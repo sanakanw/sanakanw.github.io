@@ -8,7 +8,7 @@ import { vec2_t } from "../lib/math.js";
 
 function main()
 {
-  const field = new field_t(50, 50);
+  const field = new field_t(120, 120);
   
   let t = 0;
   let next_H = 0;
@@ -37,18 +37,11 @@ function main()
     if (code != "")
       eval(code);
     
-    if (t > next_H) {
-      for (let i = -5; i < 5; i++) {
-        field.emit_H(new vec2_t(-10, i), 90);
-      }
-      next_H = t + 0.2;
-    }
-    
     if (input.get_mouse_button()) {
       switch (document.getElementById("brush").value) {
       case "burst":
         if (t > next_H) {
-          field.emit_H(input.get_mouse_pos(), H_size);
+          field.emit1(input.get_mouse_pos(), H_size);
           next_H = t + H_rate;
         }
         break;

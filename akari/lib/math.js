@@ -11,6 +11,36 @@ export class vec2_t {
     this.x = x;
     this.y = y;
   }
+  
+  copy()
+  {
+    return new vec2_t(this.x, this.y);
+  }
+
+  mulf(v)
+  {
+    return new vec2_t(this.x * v, this.y * v);
+  }
+  
+  add(v)
+  {
+    return new vec2_t(this.x + v.x, this.y + v.y);
+  }
+  
+  sub(v)
+  {
+    return new vec2_t(this.x - v.x, this.y - v.y);
+  }
+  
+  length()
+  {
+    return Math.sqrt(this.dot(this));
+  }
+  
+  dot(v)
+  {
+    return this.x * v.x + this.y * v.y;
+  }
 
   static rotate(a, theta)
   {
