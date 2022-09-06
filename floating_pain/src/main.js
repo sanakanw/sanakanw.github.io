@@ -2,8 +2,23 @@ import { rand, vec2_t } from "./math.js";
 import { pen_t } from "./pen.js";
 import { cam_t } from "./cam.js";
 import { key_t, input_t } from "./input.js";
+import { trees } from "./forest_5.js";
 
 const kills = document.getElementById("kills");
+
+const key_binds = {
+  "reel_out": 18,
+  "reel_in": 32,
+  "gas": 16,
+  "forward": "W".charCodeAt(0),
+  "left": "A".charCodeAt(0),
+  "back": "S".charCodeAt(0),
+  "right": "D".charCodeAt(0),
+  "left_hook": "Q".charCodeAt(0),
+  "right_hook": "E".charCodeAt(0),
+  "restart": "T".charCodeAt(0),
+  "change_camera": "C".charCodeAt(0)
+};
 
 // it's fucking 6:29am
 // im sorry the code is bad
@@ -366,14 +381,6 @@ class titan_t {
   }
 };
 
-class tree_t {
-  constructor(pos, radius)
-  {
-    this.pos = pos;
-    this.radius = radius;
-  }
-};
-
 const TIMESTEP = 0.015;
 const TIMESCALE = 1.0;
 
@@ -382,7 +389,7 @@ const pen = new pen_t(document.getElementById("display"), cam);
 const input = new input_t(document.getElementById("display"));
 
 const pain = new pain_t();
-const trees = [];
+// const trees = [];
 const titans = [];
 
 let move_status = {
@@ -413,7 +420,6 @@ function main()
 {
   pain.vel = new vec2_t(0, 0);
   
-  spawn_trees();
   spawn_titans();
   
   input.bind(key_t.code("C"), function() {
@@ -429,16 +435,10 @@ function main()
   });
   
   input.bind(key_t.code("T"), function() {
-    pain.pos = new vec2_t();
-    pain.vel = new vec2_t();
-    pain.hook.release();
-    pain.hook_b.release();
-    spawn_titans();
-    start_time = new Date();
-    kills.innerHTML = "---------- DAMAGE ----------";
   });
 }
 
+/*
 function spawn_trees()
 {
   for (let i = 0; i < 30; i++) {
@@ -457,7 +457,7 @@ function spawn_trees()
     } while (!should_spawn && tries < 10);
     trees.push(new tree_t(rand_pos, 0.5 + rand() * 0.1));
   }
-}
+}*/
 
 function spawn_titans()
 {
@@ -512,6 +512,8 @@ function update()
   const elapsed_time = new Date() - start_time;
   document.getElementById("time").innerHTML = format_time(elapsed_time);
   
+  cam.fov = document.getElementById("fov").value;
+  
   const sensitivity = document.getElementById("sensitivity").value / 10;
   if (cam_mode == MODE_ORIGINAL) {
     const mouse_pos = cam.from_cam_space(input.mouse_pos().rotate(cam.rot));
@@ -524,7 +526,17 @@ function update()
     hook_dir = new vec2_t(0, 1).rotate(cam.rot).normalize();
   }
   
-  if (input.get_key(key_t.code("E"))) {
+  if (input.get_key(key_binds["restart"])) {
+    pain.pos = new vec2_t();
+    pain.vel = new vec2_t();
+    pain.hook.release();
+    pain.hook_b.release();
+    spawn_titans();
+    start_time = new Date();
+    kills.innerHTML = "---------- DAMAGE ----------";
+  }
+  
+  if (input.get_key(key_binds["right_hook"])) {
     if (!pain.hook.active) {
       pain.hook.shoot(pain.pos, hook_dir.mulf(40));
     }
@@ -533,7 +545,7 @@ function update()
       pain.hook.release();
   }
   
-  if (input.get_key(key_t.code("Q"))) {
+  if (input.get_key(key_binds["left_hook"])) {
     if (!pain.hook_b.active) {
       pain.hook_b.shoot(pain.pos, hook_dir.mulf(40));
     }
@@ -543,7 +555,7 @@ function update()
   }
   
   let move_dir = new vec2_t();
-  if (input.get_key(key_t.code("W"))) {
+  if (input.get_key(key_binds["forward"])) {
     move_dir = move_dir.add(new vec2_t(0, +1));
     if (modify_move("forward", true))
       pain.gas_burst(new vec2_t(0, 1).rotate(cam.rot));
@@ -551,7 +563,7 @@ function update()
     modify_move("forward", false);
   }
   
-  if (input.get_key(key_t.code("A"))) {
+  if (input.get_key(key_binds["left"])) {
     move_dir = move_dir.add(new vec2_t(-1, 0));
     if (modify_move("left", true))
       pain.gas_burst(new vec2_t(-1, 0).rotate(cam.rot));
@@ -559,7 +571,7 @@ function update()
     modify_move("left", false);
   }
   
-  if (input.get_key(key_t.code("S"))) {
+  if (input.get_key(key_binds["back"])) {
     move_dir = move_dir.add(new vec2_t(0, -1));
     if (modify_move("back", true))
       pain.gas_burst(new vec2_t(0, -1).rotate(cam.rot));
@@ -567,7 +579,7 @@ function update()
     modify_move("back", false);
   }
   
-  if (input.get_key(key_t.code("D"))) {
+  if (input.get_key(key_binds["right"])) {
     move_dir = move_dir.add(new vec2_t(+1, 0));
     if (modify_move("right", true))
       pain.gas_burst(new vec2_t(+1, 0).rotate(cam.rot));
@@ -593,11 +605,11 @@ function update()
   }
   document.getElementById("count").innerHTML = "titans: " + titan_sum + "/10";
   
-  if (input.get_key(key_t.SHIFT))
+  if (input.get_key(key_binds["gas"]))
     pain.gas(move_dir);
-  if (input.get_key(key_t.ALT))
+  if (input.get_key(key_binds["reel_out"]))
     pain.reel_out();
-  if (input.get_key(key_t.code(" ")))
+  if (input.get_key(key_binds["reel_in"]))
     pain.reel_in();
   
   pain.update(trees, titans);
@@ -648,12 +660,73 @@ function draw()
   pen.line(new vec2_t(-map_range, map_range), new vec2_t(-map_range, -map_range));
 }
 
+const mod_keys = {
+  17: "CTRL",
+  18: "ALT",
+  32: "SPACE",
+  16: "SHIFT",
+  13: "ENTER",
+  19: "MOD",
+  20: "CAPS_LOCK",
+  9: "TAB"
+};
+
+function init_bind()
+{
+  const actions = [
+    "forward",
+    "left",
+    "back",
+    "right",
+    "gas",
+    "left_hook",
+    "right_hook",
+    "reel_out",
+    "reel_in",
+    "restart",
+    "change_camera",
+    "sensitivity",
+    "fov"
+  ];
+  
+  for (const action of actions) {
+    const elem = document.getElementById(action);
+    elem.addEventListener("keydown", function(e) {
+      if (mod_keys[e.keyCode])
+        elem.value = mod_keys[e.keyCode];
+      else if (e.keyCode >= 65 && e.keyCode < 90 || e.keyCode >= 48 && e.keyCode <= 57)
+        elem.value = String.fromCharCode(e.keyCode);
+      key_binds[elem.id] = e.keyCode;
+      
+      e.preventDefault();
+    });
+  }
+}
+
+init_bind();
 main();
-setInterval(function() {
-  pen.clear();
-  update();
-  draw();
-}, TIMESTEP * 1000);
+
+let prev_time = new Date();
+let unprocessed_time = 0;
+
+function animate() {
+  const new_time = new Date();
+  const elapsed_time = new_time - prev_time;
+  prev_time = new_time;
+  
+  unprocessed_time += elapsed_time;
+  
+  while (unprocessed_time >= TIMESTEP * 1000) {
+    unprocessed_time -= TIMESTEP * 1000;
+    pen.clear();
+    update();
+    draw();
+  }
+  
+  window.requestAnimationFrame(animate);
+}
+
+animate();
 
 function format_time(elapsed_time)
 {
