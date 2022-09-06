@@ -509,9 +509,6 @@ function update()
 {
   let hook_dir;
   
-  const elapsed_time = new Date() - start_time;
-  document.getElementById("time").innerHTML = format_time(elapsed_time);
-  
   cam.fov = document.getElementById("fov").value;
   
   const sensitivity = document.getElementById("sensitivity").value / 10;
@@ -604,6 +601,9 @@ function update()
       titan_sum++;
   }
   document.getElementById("count").innerHTML = "titans: " + titan_sum + "/10";
+  const elapsed_time = new Date() - start_time;
+  if (titan_sum > 0)
+    document.getElementById("time").innerHTML = format_time(elapsed_time);
   
   if (input.get_key(key_binds["gas"]))
     pain.gas(move_dir);
