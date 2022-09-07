@@ -9,13 +9,14 @@ class cell_t {
   H;
   mtl;
   
-  constructor(E, H, e, u, o)
+  constructor(E, H, e, u, o, solid)
   {
     this.E = E;
     this.H = H;
     this.e = e;
     this.u = u;
     this.o = o;
+    this.solid = solid;
   }
 };
 
@@ -48,7 +49,7 @@ export class field_t {
               0.0,
               E_FREE_SPACE,
               U_FREE_SPACE,
-              O_FREE_SPACE * 10.0));
+              O_FREE_SPACE * 10.0, true));
         } else {
           this.cells[y].push(
             new cell_t(
@@ -56,7 +57,7 @@ export class field_t {
               0.0,
               E_FREE_SPACE,
               U_FREE_SPACE,
-              O_FREE_SPACE));
+              O_FREE_SPACE, false));
         }
       }
     }
@@ -68,12 +69,10 @@ export class field_t {
     this.update_E();
   }
   
-  emit_H(x, y, charge)
+  emit_H(x, y, R, charge)
   {
-    const d = 1;
-    
-    for (let yp = y - d; yp <= y + d; yp++) {
-      for (let xp = x - d; xp <= x + d; xp++) {
+    for (let yp = y - R; yp <= y + R; yp++) {
+      for (let xp = x - R; xp <= x + R; xp++) {
         if (xp < 0 || yp < 0 || xp >= this.width || yp >= this.height)
           continue;
         
@@ -111,7 +110,7 @@ export class field_t {
     }
   }
   
-  set_cell(x, y, e, u, o)
+  set_cell(x, y, e, u, o, solid)
   {
     if (x < 0 || y < 0 || x >= this.width || y >= this.height)
       return;
@@ -119,6 +118,7 @@ export class field_t {
     this.get_cell(x, y).e = e;
     this.get_cell(x, y).u = u;
     this.get_cell(x, y).o = o;
+    this.get_cell(x, y).solid = solid;
   }
   
   update_H()
@@ -161,16 +161,17 @@ export class field_t {
     return this.cells[y + BOUND][x + BOUND];
   }
   
-  cell_rect(x, y, R, e, u, o)
+  cell_rect(x, y, R, e, u, o, solid)
   {
     for (let yp = y - R; yp < y + R; yp++) {
       for (let xp = x - R; xp < x + R; xp++) {
         if (xp < 0 || yp < 0 || xp >= this.width || yp >= this.height)
           continue;
         
-        this.get_cell(xp, yp).e = e + E_FREE_SPACE;
-        this.get_cell(xp, yp).u = u + U_FREE_SPACE;
-        this.get_cell(xp, yp).o = o + O_FREE_SPACE;
+        this.get_cell(xp, yp).e = e * E_FREE_SPACE;
+        this.get_cell(xp, yp).u = u * U_FREE_SPACE;
+        this.get_cell(xp, yp).o = o * O_FREE_SPACE;
+        this.get_cell(xp, yp).solid = solid;
       }
     }
   }
@@ -185,6 +186,7 @@ export class field_t {
         this.get_cell(xp, yp).e = E_FREE_SPACE;
         this.get_cell(xp, yp).u = U_FREE_SPACE;
         this.get_cell(xp, yp).o = O_FREE_SPACE;
+        this.get_cell(xp, yp).solid = false;
       }
     }
   }
@@ -195,13 +197,18 @@ export class field_t {
       for (let x = 0; x < this.width - BOUND; x++) {
         const H_value = Math.abs(this.get_cell(x, y).H) * 3;
         
-        let r = Math.max((this.get_cell(x, y).e - E_FREE_SPACE) * 255, 0);
-        let g = Math.max((this.get_cell(x, y).u - U_FREE_SPACE) * 255, 0);
-        let b = Math.max((this.get_cell(x, y).o - O_FREE_SPACE) * 255, 0);
+        let r = 0;
+        let g = 0;
+        let b = 0;
         
+        if (this.get_cell(x, y).solid || (x % 2 == 0 && y % 2 == 0)) {
+          r += Math.max((this.get_cell(x, y).e / (50 * E_FREE_SPACE)) * 255, 0);
+          g += Math.max((this.get_cell(x, y).u / (50 * U_FREE_SPACE)) * 255, 0);
+          b += Math.max((this.get_cell(x, y).o / (50 * O_FREE_SPACE)) * 255, 0);
+        }
         
         if (this.get_cell(x, y).H > 0) {
-          const H_col = HSVtoRGB(0.5, H_value / 7, H_value);
+          const H_col = HSVtoRGB(0.3 + 0.1 / H_value, 0.2 / H_value, H_value);
           r += H_col[0];
           g += H_col[1];
           b += H_col[2];
